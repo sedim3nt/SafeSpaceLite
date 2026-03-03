@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { usePrivy } from '@privy-io/react-auth';
 import { Input, Textarea, Select } from '../../common/Form';
 import { Button, Card } from '../../common';
+import { useSubmitReport } from '../../../hooks';
+import { useFormBehavior } from '../../../hooks/useFormBehavior';
+import { ConnectWallet } from '../Wallet/ConnectWallet';
 
 interface ReportFormData {
   propertyAddress: string;
@@ -13,7 +17,24 @@ interface ReportFormData {
   contactEmail?: string;
 }
 
+function parseSubmitError(error: Error): string {
+  const msg = error.message || '';
+  if (msg.includes('Cooldown active'))
+    return 'You can submit another report in 24 hours. Please check back tomorrow.';
+  if (msg.includes('Max reports reached'))
+    return 'You have reached the maximum number of reports for this property (5). This limit helps prevent spam.';
+  if (msg.includes('Arweave hash required'))
+    return 'Report data is missing. Please fill out all required fields.';
+  if (msg.includes('User rejected') || msg.includes('user rejected'))
+    return 'Submission was cancelled.';
+  return 'Something went wrong. Please try again later.';
+}
+
 export const ReportForm: React.FC = () => {
+  const { authenticated } = usePrivy();
+  const { submitReport, isPending, isConfirming, isSuccess, error } = useSubmitReport();
+  const { isHumanLikely, onKeyActivity } = useFormBehavior();
+
   const [formData, setFormData] = useState<ReportFormData>({
     propertyAddress: '',
     issueType: '',
@@ -28,6 +49,11 @@ export const ReportForm: React.FC = () => {
   const [photos, setPhotos] = useState<File[]>([]);
   const [submitted, setSubmitted] = useState(false);
 
+  // When tx confirms, show success
+  useEffect(() => {
+    if (isSuccess) setSubmitted(true);
+  }, [isSuccess]);
+
   const issueTypes = [
     { value: 'mold', label: 'Mold/Moisture' },
     { value: 'heating', label: 'Heating/Cooling' },
@@ -41,9 +67,27 @@ export const ReportForm: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In real app, would submit to API
-    console.log('Submitting report:', formData, photos);
-    setSubmitted(true);
+
+    // Build a content hash from the report data
+    // MVP: encode report as JSON string for the arweaveHash field
+    // Production: upload to Arweave first, use the returned tx hash
+    const reportPayload = JSON.stringify({
+      address: formData.propertyAddress,
+      issue: formData.issueType,
+      description: formData.description,
+      dateOccurred: formData.dateOccurred,
+      landlordNotified: formData.landlordNotified,
+      dateNotified: formData.dateNotified,
+      photoCount: photos.length,
+      timestamp: Date.now(),
+    });
+
+    submitReport({
+      propertyAddress: formData.propertyAddress,
+      issueType: formData.issueType,
+      severity: 2, // Standard by default for MVP
+      arweaveHash: reportPayload,
+    });
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,34 +99,46 @@ export const ReportForm: React.FC = () => {
 
   if (submitted) {
     return (
-      <Card className="text-center py-12">
+      <Card className="py-12 text-center">
         <div className="space-y-4">
-          <div className="mx-auto h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
-            <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+            <svg
+              className="h-8 w-8 text-green-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-900">Report Submitted Successfully</h2>
           <p className="text-gray-600">
-            Your report has been submitted {formData.anonymous ? 'anonymously' : ''} and will be reviewed.
+            Your report has been submitted and is permanently recorded.
           </p>
           <p className="text-sm text-gray-500">
-            Reference ID: #{Date.now().toString().slice(-8)}
+            Your report is now visible to the community and cannot be removed.
           </p>
-          <Button onClick={() => {
-            setSubmitted(false);
-            setFormData({
-              propertyAddress: '',
-              issueType: '',
-              description: '',
-              dateOccurred: '',
-              landlordNotified: false,
-              dateNotified: '',
-              anonymous: true,
-              contactEmail: '',
-            });
-            setPhotos([]);
-          }}>
+          <Button
+            onClick={() => {
+              setSubmitted(false);
+              setFormData({
+                propertyAddress: '',
+                issueType: '',
+                description: '',
+                dateOccurred: '',
+                landlordNotified: false,
+                dateNotified: '',
+                anonymous: true,
+                contactEmail: '',
+              });
+              setPhotos([]);
+            }}
+          >
             Submit Another Report
           </Button>
         </div>
@@ -91,9 +147,9 @@ export const ReportForm: React.FC = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} onKeyDown={onKeyActivity} className="space-y-6">
       <Card>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Property Information</h3>
+        <h3 className="mb-4 text-lg font-semibold text-gray-900">Property Information</h3>
         <Input
           label="Property Address"
           type="text"
@@ -105,7 +161,7 @@ export const ReportForm: React.FC = () => {
       </Card>
 
       <Card>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Issue Details</h3>
+        <h3 className="mb-4 text-lg font-semibold text-gray-900">Issue Details</h3>
         <div className="space-y-4">
           <Select
             label="Type of Issue"
@@ -139,7 +195,7 @@ export const ReportForm: React.FC = () => {
                 id="landlord-notified"
                 checked={formData.landlordNotified}
                 onChange={(e) => setFormData({ ...formData, landlordNotified: e.target.checked })}
-                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="text-primary-600 focus:ring-primary-500 h-4 w-4 rounded border-gray-300"
               />
               <label htmlFor="landlord-notified" className="text-sm text-gray-700">
                 I have already notified my landlord about this issue
@@ -159,13 +215,23 @@ export const ReportForm: React.FC = () => {
       </Card>
 
       <Card>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Photo Evidence</h3>
+        <h3 className="mb-4 text-lg font-semibold text-gray-900">Photo Evidence</h3>
         <div className="space-y-4">
-          <div className="flex items-center justify-center w-full">
-            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+          <div className="flex w-full items-center justify-center">
+            <label className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100">
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                <svg className="w-8 h-8 mb-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                <svg
+                  className="mb-3 h-8 w-8 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
                 </svg>
                 <p className="mb-2 text-sm text-gray-500">
                   <span className="font-semibold">Click to upload</span> or drag and drop
@@ -189,15 +255,20 @@ export const ReportForm: React.FC = () => {
                   <img
                     src={URL.createObjectURL(photo)}
                     alt={`Evidence ${index + 1}`}
-                    className="w-full h-32 object-cover rounded"
+                    className="h-32 w-full rounded object-cover"
                   />
                   <button
                     type="button"
                     onClick={() => setPhotos(photos.filter((_, i) => i !== index))}
-                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                    className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -208,7 +279,7 @@ export const ReportForm: React.FC = () => {
       </Card>
 
       <Card>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Submission Options</h3>
+        <h3 className="mb-4 text-lg font-semibold text-gray-900">Submission Options</h3>
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
             <input
@@ -216,7 +287,7 @@ export const ReportForm: React.FC = () => {
               id="anonymous"
               checked={formData.anonymous}
               onChange={(e) => setFormData({ ...formData, anonymous: e.target.checked })}
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              className="text-primary-600 focus:ring-primary-500 h-4 w-4 rounded border-gray-300"
             />
             <label htmlFor="anonymous" className="text-sm text-gray-700">
               Submit this report anonymously
@@ -236,13 +307,37 @@ export const ReportForm: React.FC = () => {
         </div>
       </Card>
 
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <p className="text-sm text-red-700">{parseSubmitError(error)}</p>
+        </Card>
+      )}
+
+      {isPending && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <p className="text-sm text-yellow-800">Confirming your submission...</p>
+        </Card>
+      )}
+
+      {isConfirming && (
+        <Card className="border-blue-200 bg-blue-50">
+          <p className="text-sm text-blue-800">Saving your report...</p>
+        </Card>
+      )}
+
       <div className="flex justify-end gap-3">
-        <Button type="button" variant="ghost">
-          Save Draft
-        </Button>
-        <Button type="submit">
-          Submit Report
-        </Button>
+        {!authenticated ? (
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-500">Sign in to submit</span>
+            <ConnectWallet />
+          </div>
+        ) : (
+          <>
+            <Button type="submit" disabled={isPending || isConfirming || !isHumanLikely}>
+              {isPending ? 'Confirming...' : isConfirming ? 'Submitting...' : 'Submit Report'}
+            </Button>
+          </>
+        )}
       </div>
     </form>
   );

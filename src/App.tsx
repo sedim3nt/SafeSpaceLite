@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/layout';
 import {
   HomePage,
@@ -11,7 +11,7 @@ import {
 
 function App() {
   return (
-    <BrowserRouter basename="/SafeSpace">
+    <HashRouter>
       <Layout>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -22,7 +22,7 @@ function App() {
           <Route path="/know-your-rights" element={<KnowYourRightsPage />} />
         </Routes>
       </Layout>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 

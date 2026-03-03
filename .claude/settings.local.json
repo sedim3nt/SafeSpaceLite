@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__acp__Bash",
+      "mcp__acp__Edit",
+      "mcp__acp__Write",
+      "WebFetch(domain:ethskills.com)",
+      "Bash(git -C /Users/stupaul22/LocalSites/SafeSpace remote -v)",
+      "Bash(git -C /Users/stupaul22/LocalSites/SafeSpace remote add upstream https://github.com/FalconDreams/SafeSpace.git)",
+      "Bash(git -C /Users/stupaul22/LocalSites/SafeSpace remote set-url origin https://github.com/FalconDreams/SafeSpace.git)",
+      "Bash(git add -A)",
+      "Bash(git commit:*)",
+      "Bash(git push -u origin main)"
+    ]
+  }
+}
