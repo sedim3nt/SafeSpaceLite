@@ -70,7 +70,7 @@ export const CommunityComments: React.FC<CommunityCommentsProps> = ({
       </div>
 
       {showAddComment && (
-        <Card className="bg-gray-50">
+        <Card className="bg-surface-muted">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Textarea
               label="Share your health/safety experience at this property"
@@ -86,11 +86,14 @@ export const CommunityComments: React.FC<CommunityCommentsProps> = ({
                 id="anonymous"
                 checked={isAnonymous}
                 onChange={(e) => setIsAnonymous(e.target.checked)}
-                className="text-primary-600 focus:ring-primary-500 h-4 w-4 rounded border-gray-300"
+                className="text-brand-600 focus:ring-brand-500 h-4 w-4 rounded border-border"
               />
-              <label htmlFor="anonymous" className="text-sm text-gray-700">
-                Post anonymously
+              <label htmlFor="anonymous" className="text-sm text-text">
+                Hide my display name
               </label>
+              <span className="block text-xs text-text-muted ml-6">
+                Your name won't be shown, but comment content is publicly visible.
+              </span>
             </div>
 
             <div className="flex gap-3">
@@ -130,7 +133,7 @@ export const CommunityComments: React.FC<CommunityCommentsProps> = ({
 
                   <button
                     onClick={() => handleHelpful(comment.id)}
-                    className="hover:text-primary-600 flex items-center gap-1 text-gray-600"
+                    className="hover:text-brand-600 flex items-center gap-1 text-text-muted"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path

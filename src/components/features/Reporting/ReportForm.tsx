@@ -117,11 +117,11 @@ export const ReportForm: React.FC = () => {
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-900">Report Submitted Successfully</h2>
-          <p className="text-gray-600">
-            Your report has been submitted and is permanently recorded.
+          <p className="text-text-muted">
+            Your report has been submitted and recorded on-chain.
           </p>
           <p className="text-sm text-gray-500">
-            Your report is now visible to the community and cannot be removed.
+            It is intended to remain publicly viewable, though availability can depend on external networks and providers.
           </p>
           <Button
             onClick={() => {
@@ -195,9 +195,9 @@ export const ReportForm: React.FC = () => {
                 id="landlord-notified"
                 checked={formData.landlordNotified}
                 onChange={(e) => setFormData({ ...formData, landlordNotified: e.target.checked })}
-                className="text-primary-600 focus:ring-primary-500 h-4 w-4 rounded border-gray-300"
+                className="text-brand-600 focus:ring-brand-500 h-4 w-4 rounded border-border"
               />
-              <label htmlFor="landlord-notified" className="text-sm text-gray-700">
+              <label htmlFor="landlord-notified" className="text-sm text-text">
                 I have already notified my landlord about this issue
               </label>
             </div>
@@ -218,7 +218,7 @@ export const ReportForm: React.FC = () => {
         <h3 className="mb-4 text-lg font-semibold text-gray-900">Photo Evidence</h3>
         <div className="space-y-4">
           <div className="flex w-full items-center justify-center">
-            <label className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100">
+            <label className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-surface-muted hover:bg-surface-muted">
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
                 <svg
                   className="mb-3 h-8 w-8 text-gray-400"
@@ -280,6 +280,11 @@ export const ReportForm: React.FC = () => {
 
       <Card>
         <h3 className="mb-4 text-lg font-semibold text-gray-900">Submission Options</h3>
+        <div className="rounded-md bg-amber-50 border border-amber-200 p-3 mb-4">
+          <p className="text-sm text-amber-800">
+            <strong>How your report is stored:</strong> Reports are recorded on a public blockchain. While your identity can be hidden, report content is publicly visible. This transparency helps hold landlords accountable, but please don't include sensitive personal information in your description.
+          </p>
+        </div>
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
             <input
@@ -287,12 +292,15 @@ export const ReportForm: React.FC = () => {
               id="anonymous"
               checked={formData.anonymous}
               onChange={(e) => setFormData({ ...formData, anonymous: e.target.checked })}
-              className="text-primary-600 focus:ring-primary-500 h-4 w-4 rounded border-gray-300"
+              className="text-brand-600 focus:ring-brand-500 h-4 w-4 rounded border-border"
             />
-            <label htmlFor="anonymous" className="text-sm text-gray-700">
-              Submit this report anonymously
+            <label htmlFor="anonymous" className="text-sm text-text">
+              Hide my display name on this report
             </label>
           </div>
+          <p className="text-xs text-text-muted ml-6">
+            Your name won't be shown, but report details are stored on a public blockchain and are visible to anyone.
+          </p>
 
           {!formData.anonymous && (
             <Input

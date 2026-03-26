@@ -6,8 +6,8 @@ export const ReportPage: React.FC = () => {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Report Health Issues</h1>
-        <p className="mt-2 text-lg text-gray-600">
-          Submit health and safety violations anonymously with photo evidence
+        <p className="mt-2 text-lg text-text-muted">
+          Submit health and safety violations with optional anonymous display and photo evidence
         </p>
       </div>
 
@@ -20,10 +20,10 @@ export const ReportPage: React.FC = () => {
           </div>
           <div className="ml-3">
             <h3 className="text-sm font-medium text-blue-800">
-              Your privacy is protected
+              Privacy and safety notes
             </h3>
             <p className="mt-1 text-sm text-blue-700">
-              Reports can be submitted anonymously. We do not share your information with landlords or property managers.
+              Reports are stored on a public blockchain. You can hide your display name, but report content is publicly visible. This transparency helps build accountability — just avoid including sensitive personal details in your report. Authentication and network providers may also process metadata needed to run the service.
             </p>
           </div>
         </div>
