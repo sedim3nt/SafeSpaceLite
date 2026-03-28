@@ -1,6 +1,12 @@
-import type { Property } from '../types';
+interface SeedProperty {
+  address: string;
+  landlord: string;
+  licenseStatus: string;
+  violations: { date: string; type: string; status: string; description: string }[];
+  comments: { id: string; text: string; date: string; helpful: number; anonymous: boolean }[];
+}
 
-export const seedProperties: Record<string, Property> = {
+export const seedProperties: Record<string, SeedProperty> = {
   '1234 pearl st': {
     address: '1234 Pearl St, Boulder, CO 80302',
     landlord: 'Boulder Property Management LLC',

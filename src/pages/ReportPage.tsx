@@ -6,6 +6,29 @@ import { useAuth } from '../contexts/AuthContext';
 import { useFormBehavior } from '../hooks';
 import { supabase } from '../lib/supabase';
 
+/** Strip EXIF metadata by re-encoding the image through a canvas */
+function stripExif(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { reject(new Error('Canvas not supported')); return; }
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob(
+        (blob) => blob ? resolve(blob) : reject(new Error('Failed to encode image')),
+        'image/jpeg',
+        0.9,
+      );
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 const issueTypes = [
   { value: 'mold', label: 'Mold' },
   { value: 'radon', label: 'Radon' },
@@ -35,7 +58,7 @@ async function hashAddress(address: string): Promise<string> {
 
 export function ReportPage() {
   const { user } = useAuth();
-  const { isHumanLikely, onKeyActivity } = useFormBehavior();
+  const { isHumanLikely, onKeyActivity, honeypot, setHoneypot } = useFormBehavior();
 
   const [form, setForm] = useState({
     address: '',
@@ -95,14 +118,14 @@ export function ReportPage() {
         property = newProp;
       }
 
-      // Upload photos to Supabase Storage
+      // Upload photos to Supabase Storage (EXIF stripped for privacy)
       const photoUrls: string[] = [];
       for (const photo of photos) {
-        const ext = photo.name.split('.').pop();
-        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const stripped = await stripExif(photo);
+        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
         const { error: uploadErr } = await supabase.storage
           .from('evidence')
-          .upload(path, photo);
+          .upload(path, stripped, { contentType: 'image/jpeg' });
 
         if (!uploadErr) {
           const { data: urlData } = supabase.storage.from('evidence').getPublicUrl(path);
@@ -170,6 +193,18 @@ export function ReportPage() {
       <ProtectedAction>
         <Card>
           <form onSubmit={handleSubmit} onKeyDown={onKeyActivity} className="space-y-6">
+            {/* Honeypot field — hidden from real users, catches bots */}
+            <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', opacity: 0 }}>
+              <input
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+            </div>
+
             <Input
               label="Property Address"
               placeholder="123 Pearl St, Boulder, CO 80302"

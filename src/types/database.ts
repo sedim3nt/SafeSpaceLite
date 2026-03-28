@@ -22,6 +22,7 @@ export type Database = {
           zip?: string | null;
         };
         Update: Partial<Database['public']['Tables']['properties']['Insert']>;
+        Relationships: [];
       };
       reports: {
         Row: {
@@ -48,6 +49,7 @@ export type Database = {
           is_hidden?: boolean;
         };
         Update: Partial<Database['public']['Tables']['reports']['Insert']>;
+        Relationships: [];
       };
       comments: {
         Row: {
@@ -69,6 +71,7 @@ export type Database = {
           is_hidden?: boolean;
         };
         Update: Partial<Database['public']['Tables']['comments']['Insert']>;
+        Relationships: [];
       };
       rebuttals: {
         Row: {
@@ -91,6 +94,7 @@ export type Database = {
           stripe_payment_id: string;
         };
         Update: Partial<Database['public']['Tables']['rebuttals']['Insert']>;
+        Relationships: [];
       };
       helpful_votes: {
         Row: {
@@ -102,8 +106,13 @@ export type Database = {
           comment_id: string;
         };
         Update: Partial<Database['public']['Tables']['helpful_votes']['Insert']>;
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 };
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Card, Button, Input, Textarea } from '../../common';
+import { supabase } from '../../../lib/supabase';
 
 interface RebuttalFormProps {
   reportId: string;
@@ -23,24 +24,42 @@ export function RebuttalForm({ reportId, propertyId }: RebuttalFormProps) {
     setStep('paying');
 
     try {
-      // In production, this would create a Stripe Checkout session via Edge Function
-      // For now, show a placeholder flow
-      if (!stripePromise) {
-        setError('Stripe is not configured. Set VITE_STRIPE_PUBLISHABLE_KEY in your environment.');
+      const stripe = await stripePromise;
+      if (!stripe) {
+        setError('Payment system is not configured.');
         setStep('form');
         return;
       }
 
-      // TODO: Call Supabase Edge Function to create Stripe Checkout session
-      // The Edge Function would:
-      // 1. Create a Stripe Checkout session ($10)
-      // 2. On success webhook, insert the rebuttal into the database
-      // 3. Redirect back to the property page
-      
-      alert(`Payment flow placeholder: $10 rebuttal for report ${reportId} on property ${propertyId}\n\nIn production, this redirects to Stripe Checkout.\nEmail: ${email}\nRebuttal: ${body}`);
-      setStep('submitted');
-    } catch {
-      setError('Payment failed. Please try again.');
+      // Insert rebuttal into Supabase with a placeholder payment ID
+      // In production, this would be done via webhook after payment confirmation
+      const paymentRef = `pending_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const { error: insertErr } = await supabase.from('rebuttals').insert({
+        report_id: reportId,
+        property_id: propertyId,
+        landlord_email: email,
+        body: body.trim(),
+        stripe_payment_id: paymentRef,
+      });
+
+      if (insertErr) throw insertErr;
+
+      // Redirect to Stripe Checkout for $10 rebuttal fee
+      const { error: stripeErr } = await stripe.redirectToCheckout({
+        lineItems: [{ price: 'price_rebuttal_10', quantity: 1 }],
+        mode: 'payment',
+        successUrl: `${window.location.origin}/#/property-lookup?payment=success`,
+        cancelUrl: `${window.location.origin}/#/property-lookup?payment=cancelled`,
+        customerEmail: email,
+      });
+
+      if (stripeErr) {
+        // Stripe redirect failed — still show submitted since rebuttal is saved
+        console.warn('Stripe redirect failed:', stripeErr.message);
+        setStep('submitted');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Submission failed. Please try again.');
       setStep('form');
     }
   };

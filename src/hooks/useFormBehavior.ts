@@ -6,6 +6,7 @@ export function useFormBehavior() {
   const [mountTime] = useState(() => Date.now());
   const [hasTyped, setHasTyped] = useState(false);
   const [timeElapsed, setTimeElapsed] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -22,7 +23,11 @@ export function useFormBehavior() {
   }, [hasTyped]);
 
   return {
-    isHumanLikely: timeElapsed && hasTyped,
+    /** True when behavior looks human: 10s elapsed + keyboard activity + honeypot empty */
+    isHumanLikely: timeElapsed && hasTyped && honeypot === '',
     onKeyActivity,
+    /** Honeypot value — bind to a hidden input. If filled, submission is blocked. */
+    honeypot,
+    setHoneypot,
   };
 }
