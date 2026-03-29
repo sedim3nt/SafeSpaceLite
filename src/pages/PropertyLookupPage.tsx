@@ -3,9 +3,12 @@ import { PropertySearch } from '../components/features/PropertyLookup/PropertySe
 import { PropertyDetails } from '../components/features/PropertyLookup/PropertyDetails';
 import { CommunityComments } from '../components/features/PropertyLookup/CommunityComments';
 import { RebuttalForm } from '../components/features/PropertyLookup/RebuttalForm';
+import { LandlordScoreCard } from '../components/features/RentalReview/LandlordScoreCard';
 import { supabase } from '../lib/supabase';
 import { ensureProperty, type USPSValidationResult } from '../lib/usps';
 import type { Report, Comment as DbComment, Rebuttal, Property } from '../types/database';
+
+type Tab = 'health' | 'rental';
 
 export function PropertyLookupPage() {
   const [searchedAddress, setSearchedAddress] = useState('');
@@ -16,6 +19,7 @@ export function PropertyLookupPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [uspsInfo, setUspsInfo] = useState<USPSValidationResult | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>('health');
 
   const fetchPropertyData = useCallback(async (addressHash: string) => {
     const { data: prop } = await supabase
@@ -50,6 +54,8 @@ export function PropertyLookupPage() {
     setLoading(true);
     setSearched(true);
 
+    // Ensure property exists so rental tab works even for new addresses
+    await ensureProperty(result);
     await fetchPropertyData(result.addressHash);
     setLoading(false);
   };
@@ -59,6 +65,11 @@ export function PropertyLookupPage() {
       fetchPropertyData(property.address_hash);
     }
   };
+
+  const tabs: { key: Tab; label: string }[] = [
+    { key: 'health', label: 'Health & Safety' },
+    { key: 'rental', label: 'Rental Experience' },
+  ];
 
   return (
     <div className="space-y-8">
@@ -95,26 +106,56 @@ export function PropertyLookupPage() {
 
       {searched && !loading && property && (
         <>
-          <PropertyDetails
-            address={property.address_normalized}
-            reports={reports}
-            comments={comments}
-            rebuttals={rebuttals}
-          />
-
-          <div className="border-t border-border pt-8">
-            <CommunityComments
-              propertyId={property.id}
-              comments={comments}
-              onCommentAdded={handleRefresh}
-            />
+          {/* Tab bar */}
+          <div className="border-b border-border">
+            <div className="flex gap-0">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`px-5 py-3 text-sm font-medium transition-colors duration-200 border-b-2 -mb-px ${
+                    activeTab === tab.key
+                      ? 'border-sage-600 text-sage-700'
+                      : 'border-transparent text-text-muted hover:text-text hover:border-sage-200'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {reports.length > 0 && (
-            <div className="border-t border-border pt-8">
-              <h3 className="mb-4 text-lg font-semibold text-text">Property Owner?</h3>
-              <RebuttalForm reportId={reports[0].id} propertyId={property.id} />
-            </div>
+          {/* Health & Safety tab */}
+          {activeTab === 'health' && (
+            <>
+              <PropertyDetails
+                address={property.address_normalized}
+                reports={reports}
+                comments={comments}
+                rebuttals={rebuttals}
+              />
+
+              <div className="border-t border-border pt-8">
+                <CommunityComments
+                  propertyId={property.id}
+                  comments={comments}
+                  onCommentAdded={handleRefresh}
+                />
+              </div>
+
+              {reports.length > 0 && (
+                <div className="border-t border-border pt-8">
+                  <h3 className="mb-4 text-lg font-semibold text-text">Property Owner?</h3>
+                  <RebuttalForm reportId={reports[0].id} propertyId={property.id} />
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Rental Experience tab */}
+          {activeTab === 'rental' && (
+            <LandlordScoreCard propertyId={property.id} />
           )}
         </>
       )}

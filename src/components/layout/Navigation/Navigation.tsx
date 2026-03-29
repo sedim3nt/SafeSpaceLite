@@ -13,6 +13,7 @@ export function Navigation({ mobile = false, onNavigate }: NavigationProps) {
     { name: 'Report Issue', href: '/report' },
     { name: 'Track Response', href: '/tracker' },
     { name: 'Know Your Rights', href: '/know-your-rights' },
+    { name: 'Review', href: '/review' },
   ];
 
   const baseClasses = mobile

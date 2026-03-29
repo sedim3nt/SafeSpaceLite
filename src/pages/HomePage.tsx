@@ -40,6 +40,12 @@ export function HomePage() {
       link: '/legal-notice',
       icon: '📄',
     },
+    {
+      title: 'Rate Your Rental Experience',
+      description: 'Rate your landlord across 7 categories and help future tenants.',
+      link: '/review',
+      icon: '⭐',
+    },
   ];
 
   return (

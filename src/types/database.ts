@@ -109,7 +109,83 @@ export type Database = {
         Relationships: [];
       };
     };
-    Views: Record<string, never>;
+      landlords: {
+        Row: {
+          id: string;
+          name: string;
+          management_company: string | null;
+          relationship_type: string;
+          property_id: string;
+          created_at: string;
+          created_by: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          management_company?: string | null;
+          relationship_type: string;
+          property_id: string;
+          created_by: string;
+        };
+        Update: Partial<Database['public']['Tables']['landlords']['Insert']>;
+        Relationships: [];
+      };
+      rental_reviews: {
+        Row: {
+          id: string;
+          property_id: string;
+          landlord_id: string;
+          reviewer_id: string;
+          relationship_type: string;
+          responsiveness: number;
+          fairness: number;
+          respect: number;
+          temperament: number;
+          property_condition: number;
+          communication: number;
+          safety: number;
+          tags: string[];
+          comment: string | null;
+          is_anonymous: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          property_id: string;
+          landlord_id: string;
+          reviewer_id: string;
+          relationship_type: string;
+          responsiveness: number;
+          fairness: number;
+          respect: number;
+          temperament: number;
+          property_condition: number;
+          communication: number;
+          safety: number;
+          tags?: string[];
+          comment?: string | null;
+          is_anonymous?: boolean;
+        };
+        Update: Partial<Database['public']['Tables']['rental_reviews']['Insert']>;
+        Relationships: [];
+      };
+    };
+    Views: {
+      landlord_scores: {
+        Row: {
+          landlord_id: string;
+          review_count: number;
+          avg_responsiveness: number;
+          avg_fairness: number;
+          avg_respect: number;
+          avg_temperament: number;
+          avg_property_condition: number;
+          avg_communication: number;
+          avg_safety: number;
+          overall_score: number;
+        };
+      };
+    };
     Functions: Record<string, never>;
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -120,3 +196,6 @@ export type Property = Database['public']['Tables']['properties']['Row'];
 export type Report = Database['public']['Tables']['reports']['Row'];
 export type Comment = Database['public']['Tables']['comments']['Row'];
 export type Rebuttal = Database['public']['Tables']['rebuttals']['Row'];
+export type Landlord = Database['public']['Tables']['landlords']['Row'];
+export type RentalReview = Database['public']['Tables']['rental_reviews']['Row'];
+export type LandlordScore = Database['public']['Views']['landlord_scores']['Row'];

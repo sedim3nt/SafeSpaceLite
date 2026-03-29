@@ -8,6 +8,7 @@ import {
   TrackerPage,
   KnowYourRightsPage,
   LegalNoticePage,
+  ReviewPage,
 } from './pages';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
           <Route path="/tracker" element={<TrackerPage />} />
           <Route path="/know-your-rights" element={<KnowYourRightsPage />} />
           <Route path="/legal-notice" element={<LegalNoticePage />} />
+          <Route path="/review" element={<ReviewPage />} />
         </Routes>
       </Layout>
     </HashRouter>
