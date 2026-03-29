@@ -5,6 +5,7 @@ import { ProtectedAction } from '../components/auth/ProtectedAction';
 import { useAuth } from '../contexts/AuthContext';
 import { useFormBehavior } from '../hooks';
 import { supabase } from '../lib/supabase';
+import { validateAddress, ensureProperty } from '../lib/usps';
 
 /** Strip EXIF metadata by re-encoding the image through a canvas */
 function stripExif(file: File): Promise<Blob> {
@@ -105,30 +106,19 @@ export function ReportPage() {
     setError('');
 
     try {
-      const addressHash = await hashAddress(form.address);
-      const normalized = form.address.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, ' ');
-
-      // Find or create property
-      let { data: property } = await supabase
-        .from('properties')
-        .select('id')
-        .eq('address_hash', addressHash)
-        .single();
-
-      if (!property) {
-        const { data: newProp, error: propErr } = await supabase
-          .from('properties')
-          .insert({
-            address_raw: form.address,
-            address_normalized: normalized,
-            address_hash: addressHash,
-          })
-          .select('id')
-          .single();
-
-        if (propErr) throw propErr;
-        property = newProp;
+      // Validate address through USPS API
+      const uspsResult = await validateAddress(form.address);
+      if (!uspsResult.valid) {
+        setError('Address not found. Please enter a valid street address.');
+        return;
       }
+      if (!uspsResult.isBoulder) {
+        setError(`This address is in ${uspsResult.address.city}, ${uspsResult.address.state}. SafeSpace currently covers Boulder County only.`);
+        return;
+      }
+
+      // Find or create property using USPS-normalized address
+      const property = await ensureProperty(uspsResult);
 
       // Upload photos to Supabase Storage (EXIF stripped for privacy)
       const photoUrls: string[] = [];
@@ -147,7 +137,7 @@ export function ReportPage() {
 
       // Insert the report
       const { error: reportErr } = await supabase.from('reports').insert({
-        property_id: property!.id,
+        property_id: property.id,
         reporter_id: user.id,
         issue_type: form.issueType,
         severity: form.severity,

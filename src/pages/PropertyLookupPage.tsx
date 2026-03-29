@@ -4,6 +4,7 @@ import { PropertyDetails } from '../components/features/PropertyLookup/PropertyD
 import { CommunityComments } from '../components/features/PropertyLookup/CommunityComments';
 import { RebuttalForm } from '../components/features/PropertyLookup/RebuttalForm';
 import { supabase } from '../lib/supabase';
+import { ensureProperty, type USPSValidationResult } from '../lib/usps';
 import type { Report, Comment as DbComment, Rebuttal, Property } from '../types/database';
 
 export function PropertyLookupPage() {
@@ -14,6 +15,7 @@ export function PropertyLookupPage() {
   const [rebuttals, setRebuttals] = useState<Rebuttal[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [uspsInfo, setUspsInfo] = useState<USPSValidationResult | null>(null);
 
   const fetchPropertyData = useCallback(async (addressHash: string) => {
     const { data: prop } = await supabase
@@ -42,20 +44,13 @@ export function PropertyLookupPage() {
     }
   }, []);
 
-  const handleSearch = async (address: string) => {
-    setSearchedAddress(address);
+  const handleSearch = async (result: USPSValidationResult) => {
+    setSearchedAddress(result.normalized);
+    setUspsInfo(result);
     setLoading(true);
     setSearched(true);
 
-    // Create a simple hash from the address for lookup
-    const normalized = address.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, ' ');
-    const encoder = new TextEncoder();
-    const data = encoder.encode(normalized);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const addressHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-    await fetchPropertyData(addressHash);
+    await fetchPropertyData(result.addressHash);
     setLoading(false);
   };
 
@@ -75,6 +70,28 @@ export function PropertyLookupPage() {
       </div>
 
       <PropertySearch onSearch={handleSearch} loading={loading} />
+
+      {searched && !loading && uspsInfo && (
+        <div className="rounded-lg bg-green-50 border border-green-200 p-3 flex items-start gap-2">
+          <span className="text-green-600 text-lg">✓</span>
+          <div>
+            <p className="text-sm font-medium text-green-800">
+              USPS Verified: {uspsInfo.normalized}
+            </p>
+            {uspsInfo.additionalInfo?.vacant === 'Y' && (
+              <p className="text-xs text-amber-700 mt-1">⚠ USPS reports this address as vacant</p>
+            )}
+            {uspsInfo.additionalInfo?.business === 'Y' && (
+              <p className="text-xs text-amber-700 mt-1">ℹ This is a commercial address</p>
+            )}
+            {uspsInfo.corrections?.some(c => c.code === '32') && (
+              <p className="text-xs text-gray-600 mt-1">
+                Tip: Add an apartment or unit number for more specific results
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {searched && !loading && property && (
         <>

@@ -1,59 +1,103 @@
 import { useState, type FormEvent } from 'react';
 import { Button, Input } from '../../common';
+import { validateAddress, type USPSValidationResult } from '../../../lib/usps';
 
 interface PropertySearchProps {
-  onSearch: (address: string) => void;
+  onSearch: (result: USPSValidationResult) => void;
   loading?: boolean;
 }
 
-const BOULDER_ZIPS = [
-  '80301', '80302', '80303', '80304', '80305', '80306', '80307', '80308', '80309', '80310',
-  '80314', '80321', '80322', '80323', '80328', '80329',
-];
-
-function isBoulderAddress(address: string): boolean {
-  const lower = address.toLowerCase();
-  if (lower.includes('boulder')) return true;
-  if (/\bco\b/.test(lower)) return true;
-  return BOULDER_ZIPS.some((zip) => address.includes(zip));
-}
-
 export function PropertySearch({ onSearch, loading }: PropertySearchProps) {
-  const [address, setAddress] = useState('');
+  const [streetAddress, setStreetAddress] = useState('');
+  const [unit, setUnit] = useState('');
+  const [validating, setValidating] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const trimmed = address.trim();
+    const trimmed = streetAddress.trim();
     if (!trimmed) return;
 
-    if (!isBoulderAddress(trimmed)) {
-      setError('Please enter a Boulder, CO address (include city, state, or zip code).');
-      return;
-    }
-
     setError('');
-    onSearch(trimmed);
+    setValidating(true);
+
+    try {
+      const result = await validateAddress(trimmed, unit.trim() || undefined);
+
+      if (!result.valid) {
+        setError('Address not found. Please check the street address and try again.');
+        return;
+      }
+
+      if (!result.isBoulder) {
+        setError(
+          `This address is in ${result.address.city}, ${result.address.state} ${result.address.zipCode}. SafeSpace currently covers Boulder County only.`
+        );
+        return;
+      }
+
+      // Show corrections as info, not errors
+      if (result.corrections?.length > 0) {
+        const needsUnit = result.corrections.some((c) => c.code === '32');
+        if (needsUnit && !unit.trim()) {
+          // Address is valid but may need a unit — still proceed but note it
+        }
+      }
+
+      onSearch(result);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to validate address. Please try again.'
+      );
+    } finally {
+      setValidating(false);
+    }
   };
+
+  const isLoading = loading || validating;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="flex-1">
-          <Input
-            placeholder="Enter a Boulder County address..."
-            value={address}
-            onChange={(e) => { setAddress(e.target.value); setError(''); }}
-            aria-label="Property address"
-          />
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex-1">
+            <Input
+              placeholder="Street address (e.g. 1600 Pearl St)"
+              value={streetAddress}
+              onChange={(e) => {
+                setStreetAddress(e.target.value);
+                setError('');
+              }}
+              aria-label="Street address"
+            />
+          </div>
+          <div className="w-full sm:w-36">
+            <Input
+              placeholder="Apt / Unit"
+              value={unit}
+              onChange={(e) => {
+                setUnit(e.target.value);
+                setError('');
+              }}
+              aria-label="Apartment or unit number"
+            />
+          </div>
         </div>
-        <Button type="submit" disabled={!address.trim() || loading}>
-          {loading ? 'Searching...' : 'Search'}
-        </Button>
+        <div>
+          <Button type="submit" disabled={!streetAddress.trim() || isLoading}>
+            {isLoading ? 'Validating...' : 'Search Property'}
+          </Button>
+        </div>
       </div>
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && (
+        <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
       <p className="text-sm text-text-muted">
-        Search any Boulder County rental address to view reports, comments, and landlord responses.
+        Enter any Boulder County street address. We validate it with the USPS to ensure accuracy and prevent duplicates.
       </p>
     </form>
   );
