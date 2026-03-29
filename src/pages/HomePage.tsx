@@ -5,57 +5,6 @@ import { getSupportedCities } from '../data/cityRegistry';
 import { validateAddress } from '../lib/usps';
 import { WaitlistForm } from '../components/features/Waitlist/WaitlistForm';
 
-// Simple US SVG map with city dots
-function CityMap() {
-  const cities = getSupportedCities();
-  const mapBounds = { minLng: -125, maxLng: -66, minLat: 24, maxLat: 50 };
-  const svgW = 960;
-  const svgH = 500;
-
-  function project(lng: number, lat: number): [number, number] {
-    const x = ((lng - mapBounds.minLng) / (mapBounds.maxLng - mapBounds.minLng)) * svgW;
-    const y = ((mapBounds.maxLat - lat) / (mapBounds.maxLat - mapBounds.minLat)) * svgH;
-    return [x, y];
-  }
-
-  return (
-    <div className="relative mx-auto max-w-3xl">
-      <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full h-auto" role="img" aria-label="Map of SafeSpace cities">
-        <rect x="0" y="0" width={svgW} height={svgH} fill="transparent" />
-        {/* Simplified US outline */}
-        <path
-          d="M80,180 L120,100 L200,80 L300,70 L400,60 L500,50 L600,60 L700,80 L780,100 L850,130 L880,200 L870,280 L850,340 L800,380 L750,400 L680,420 L600,430 L500,440 L400,430 L300,420 L200,400 L150,350 L100,280 L80,220Z"
-          fill="none"
-          stroke="var(--color-bamboo-200)"
-          strokeWidth="2"
-          opacity="0.5"
-        />
-
-        {cities.map((city) => {
-          const [cx, cy] = project(city.coordinates[0], city.coordinates[1]);
-          return (
-            <Link key={city.slug} to={`/city/${city.slug}`}>
-              <g className="group cursor-pointer">
-                <circle cx={cx} cy={cy} r="12" fill="var(--color-sage-400)" opacity="0" className="group-hover:animate-ping group-hover:opacity-20" />
-                <circle cx={cx} cy={cy} r="6" fill="var(--color-sage-600)" className="transition-all duration-200" stroke="white" strokeWidth="2" />
-                <text
-                  x={cx}
-                  y={cy - 14}
-                  textAnchor="middle"
-                  className="text-xs fill-ink opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                  style={{ fontFamily: 'var(--font-body)', fontSize: '12px' }}
-                >
-                  {city.name} →
-                </text>
-              </g>
-            </Link>
-          );
-        })}
-      </svg>
-    </div>
-  );
-}
-
 export function HomePage() {
   const navigate = useNavigate();
   const cities = getSupportedCities();
