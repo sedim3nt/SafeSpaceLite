@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { PropertySearch } from '../components/features/PropertyLookup/PropertySearch';
 import { PropertyDetails } from '../components/features/PropertyLookup/PropertyDetails';
 import { CommunityComments } from '../components/features/PropertyLookup/CommunityComments';
@@ -11,6 +12,7 @@ import type { Report, Comment as DbComment, Rebuttal, Property } from '../types/
 type Tab = 'health' | 'rental';
 
 export function PropertyLookupPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchedAddress, setSearchedAddress] = useState('');
   const [property, setProperty] = useState<Property | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
@@ -20,6 +22,39 @@ export function PropertyLookupPage() {
   const [searched, setSearched] = useState(false);
   const [uspsInfo, setUspsInfo] = useState<USPSValidationResult | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('health');
+  const [paymentStatus, setPaymentStatus] = useState<'success' | 'cancelled' | null>(null);
+
+  // Handle Stripe redirect — insert pending rebuttal after successful payment
+  useEffect(() => {
+    const payment = searchParams.get('payment');
+    const reportId = searchParams.get('report');
+    const propertyId = searchParams.get('property');
+
+    if (payment === 'success' && reportId && propertyId) {
+      setPaymentStatus('success');
+      // Clear URL params
+      setSearchParams({});
+
+      // Read pending rebuttal from sessionStorage and insert
+      const pending = sessionStorage.getItem('pending_rebuttal');
+      if (pending) {
+        try {
+          const data = JSON.parse(pending);
+          supabase.from('rebuttals').insert({
+            report_id: data.report_id,
+            property_id: data.property_id,
+            landlord_email: data.landlord_email,
+            body: data.body,
+          } as any).then(() => {
+            sessionStorage.removeItem('pending_rebuttal');
+          });
+        } catch { /* ignore parse errors */ }
+      }
+    } else if (payment === 'cancelled') {
+      setPaymentStatus('cancelled');
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
 
   const fetchPropertyData = useCallback(async (addressHash: string) => {
     const { data: prop } = await supabase
@@ -79,6 +114,17 @@ export function PropertyLookupPage() {
           Research rental property health history and read community experiences
         </p>
       </div>
+
+      {paymentStatus === 'success' && (
+        <div className="rounded-lg bg-green-50 border border-green-200 p-4 mb-4">
+          <p className="text-sm font-medium text-green-800">✓ Payment received. Your landlord rebuttal has been submitted and will appear with the report.</p>
+        </div>
+      )}
+      {paymentStatus === 'cancelled' && (
+        <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 mb-4">
+          <p className="text-sm font-medium text-amber-800">Payment was cancelled. Your rebuttal was not submitted.</p>
+        </div>
+      )}
 
       <PropertySearch onSearch={handleSearch} loading={loading} />
 
