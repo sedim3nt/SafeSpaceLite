@@ -4,6 +4,7 @@ import { Button, Card, Input } from '../components/common';
 import { getSupportedCities } from '../data/cityRegistry';
 import { validateAddress } from '../lib/usps';
 import { WaitlistForm } from '../components/features/Waitlist/WaitlistForm';
+import { AddressAutocomplete } from '../components/features/AddressAutocomplete';
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -68,24 +69,33 @@ export function HomePage() {
 
       {/* Address Search */}
       <section className="mx-auto max-w-2xl">
-        <form onSubmit={handleSearch} className="space-y-3">
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <div className="flex-1">
-              <Input
-                placeholder="Enter your address to get started"
-                value={address}
-                onChange={(e) => { setAddress(e.target.value); setSearchError(''); setUnsupportedCity(null); }}
-                aria-label="Street address"
-              />
-            </div>
-            <Button type="submit" disabled={!address.trim() || searching}>
-              {searching ? 'Searching...' : 'Search'}
-            </Button>
-          </div>
-          {searchError && (
-            <p className="text-sm text-danger">{searchError}</p>
-          )}
-        </form>
+        <AddressAutocomplete
+          onSelect={(addr) => { setAddress(addr); setSearchError(''); setUnsupportedCity(null); }}
+          onSubmit={async (addr) => {
+            setAddress(addr);
+            setSearching(true);
+            setSearchError('');
+            setUnsupportedCity(null);
+            try {
+              const result = await validateAddress(addr);
+              if (!result.valid) {
+                setSearchError('Address not found. Please enter a valid street address.');
+                return;
+              }
+              if (result.citySlug) {
+                navigate(`/city/${result.citySlug}`);
+              } else {
+                setUnsupportedCity({ city: result.address.city, state: result.address.state, zip: result.address.zipCode });
+              }
+            } catch (err) {
+              setSearchError(err instanceof Error ? err.message : 'Unable to validate address.');
+            } finally {
+              setSearching(false);
+            }
+          }}
+          searching={searching}
+          error={searchError}
+        />
         {unsupportedCity && (
           <div className="mt-4">
             <WaitlistForm city={unsupportedCity.city} state={unsupportedCity.state} zip={unsupportedCity.zip} />
