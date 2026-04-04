@@ -8,6 +8,7 @@ interface NavigationProps {
 export function Navigation({ mobile = false, onNavigate }: NavigationProps) {
   const location = useLocation();
   const navItems = [
+    { name: 'Boulder', href: '/boulder', featured: true },
     { name: 'Emergency Guide', href: '/emergency-guide', urgent: true },
     { name: 'Property Lookup', href: '/property-lookup' },
     { name: 'Report Issue', href: '/report' },
@@ -31,13 +32,17 @@ export function Navigation({ mobile = false, onNavigate }: NavigationProps) {
             to={item.href}
             onClick={onNavigate}
             className={`${baseClasses} transition-colors duration-200 ${
-              item.urgent
+              'featured' in item && item.featured
                 ? isActive
-                  ? 'bg-danger-bg text-danger font-semibold'
-                  : 'text-danger hover:bg-danger-bg'
-                : isActive
-                  ? 'bg-sage-50 text-sage-700 font-semibold'
-                  : 'text-text-muted hover:bg-surface-muted hover:text-text'
+                  ? 'bg-sage-100 text-sage-800 font-semibold'
+                  : 'text-sage-700 font-medium hover:bg-sage-50'
+                : item.urgent
+                  ? isActive
+                    ? 'bg-danger-bg text-danger font-semibold'
+                    : 'text-danger hover:bg-danger-bg'
+                  : isActive
+                    ? 'bg-sage-50 text-sage-700 font-semibold'
+                    : 'text-text-muted hover:bg-surface-muted hover:text-text'
             }`}
           >
             {item.name}

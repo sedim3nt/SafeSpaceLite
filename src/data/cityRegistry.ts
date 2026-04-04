@@ -56,7 +56,7 @@ const cities: CityEntry[] = [
     state: 'Colorado',
     stateCode: 'CO',
     population: 105_000,
-    renterPercent: 55,
+    renterPercent: 60,
     university: { name: 'University of Colorado Boulder', students: 36_000 },
     anonymousReporting: true,
     mandatoryInspections: false,
@@ -68,6 +68,10 @@ const cities: CityEntry[] = [
     },
     keyLaws: [
       { name: 'Warranty of Habitability', citation: 'CRS § 38-12-501 et seq', summary: 'Landlords must maintain rental units in a condition fit for human habitation with repair deadlines of 24h/72h/7–30 days.' },
+      { name: 'Security Deposit Return', citation: 'CRS § 38-12-510', summary: 'Landlords must return security deposits within 60 days of move-out (updated from 30 days in 2024) with an itemized deduction list.' },
+      { name: 'Retaliation Prohibition', citation: 'CRS § 38-12-511', summary: 'Landlords cannot retaliate against tenants who report violations or exercise legal rights. Actions within 6 months are presumed retaliatory.' },
+      { name: 'Rental Application Fairness Act', citation: 'HB24-1098', summary: 'Limits application fees, requires upfront disclosure of screening criteria, and mandates explanations for rejected applicants.' },
+      { name: 'Boulder Rental Licensing', citation: 'Boulder Revised Code', summary: 'All rental properties in Boulder must be licensed with the city, ensuring minimum safety and habitability standards.' },
       { name: 'Boulder Property Maintenance Code', citation: 'Boulder Revised Code Title 10 Ch 2', summary: 'Sets minimum health and safety standards for occupied buildings in Boulder, enforced by city inspectors.' },
     ],
     enforcement: {
@@ -119,11 +123,11 @@ const cities: CityEntry[] = [
         title: 'Security Deposit Rights',
         content: [
           'Security deposits cannot exceed 2 months\' rent',
-          'Landlords must return your deposit within 30 days (or 60 if stated in lease)',
+          'Landlords must return your deposit within 60 days of move-out (updated from 30 days in 2024)',
           'An itemized list of all deductions must be provided',
           'If wrongfully withheld, you can sue for up to 3x the amount plus attorney fees',
         ],
-        laws: ['CRS § 38-12-103'],
+        laws: ['CRS § 38-12-103', 'CRS § 38-12-510'],
       },
     ],
   },

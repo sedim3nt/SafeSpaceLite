@@ -12,6 +12,7 @@ import {
   CityPage,
 } from './pages';
 import { AdvocatePage } from './pages/AdvocatePage';
+import { BoulderLandingPage } from './pages/BoulderLandingPage';
 import { AIChatWidget } from './components/features/AIChat/AIChatWidget';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
           <Route path="/legal-notice" element={<LegalNoticePage />} />
           <Route path="/review" element={<ReviewPage />} />
           <Route path="/advocate" element={<AdvocatePage />} />
+          <Route path="/boulder" element={<BoulderLandingPage />} />
           <Route path="/city/:slug" element={<CityPage />} />
         </Routes>
       </Layout>

@@ -26,6 +26,16 @@ export function HomePage() {
 
   return (
     <div className="space-y-14">
+      {/* Boulder Launch Banner */}
+      <Link to="/boulder">
+        <section className="rounded-lg bg-sage-700 p-5 sm:p-6 text-center text-white hover:bg-sage-800 transition-colors cursor-pointer">
+          <p className="text-xs font-medium uppercase tracking-widest text-sage-200 mb-1">🚀 Now Live</p>
+          <h2 className="text-xl sm:text-2xl font-bold">SafeSpace Boulder</h2>
+          <p className="mt-1 text-sage-100 text-sm">Rate your rental, know your rights, hold landlords accountable.</p>
+          <span className="inline-block mt-2 text-sm font-medium text-sage-200 hover:text-white">Explore Boulder →</span>
+        </section>
+      </Link>
+
       {/* Hero */}
       <section className="text-center pt-4">
         <h1 className="text-4xl font-bold tracking-tight text-ink sm:text-5xl">

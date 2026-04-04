@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import { getCityBySlug } from '../data/cityRegistry';
 import { Card, Button } from '../components/common';
 import { CityRightsAccordion } from '../components/features/Rights/CityRightsAccordion';
@@ -6,6 +6,11 @@ import { CityEmergencyContacts } from '../components/features/EmergencyGuide/Cit
 
 export function CityPage() {
   const { slug } = useParams<{ slug: string }>();
+  // Redirect Boulder to dedicated landing page
+  if (slug === 'boulder') {
+    return <Navigate to="/boulder" replace />;
+  }
+
   const city = slug ? getCityBySlug(slug) : undefined;
 
   if (!city) {
