@@ -11,6 +11,8 @@ import {
   ReviewPage,
   CityPage,
 } from './pages';
+import { AdvocatePage } from './pages/AdvocatePage';
+import { AIChatWidget } from './components/features/AIChat/AIChatWidget';
 
 function App() {
   return (
@@ -26,9 +28,11 @@ function App() {
           <Route path="/know-your-rights" element={<KnowYourRightsPage />} />
           <Route path="/legal-notice" element={<LegalNoticePage />} />
           <Route path="/review" element={<ReviewPage />} />
+          <Route path="/advocate" element={<AdvocatePage />} />
           <Route path="/city/:slug" element={<CityPage />} />
         </Routes>
       </Layout>
+      <AIChatWidget />
     </HashRouter>
   );
 }

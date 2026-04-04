@@ -14,6 +14,7 @@ export function Navigation({ mobile = false, onNavigate }: NavigationProps) {
     { name: 'Track Response', href: '/tracker' },
     { name: 'Know Your Rights', href: '/know-your-rights' },
     { name: 'Review', href: '/review' },
+    { name: 'AI Advocate', href: '/advocate' },
   ];
 
   const baseClasses = mobile

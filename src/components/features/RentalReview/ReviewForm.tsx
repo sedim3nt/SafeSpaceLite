@@ -1,6 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { Button, Card, Input, Textarea } from '../../common';
 import { ProtectedAction } from '../../auth/ProtectedAction';
+import { ReviewAIHelper } from './ReviewAIHelper';
 import { PropertySearch } from '../PropertyLookup/PropertySearch';
 import { supabase } from '../../../lib/supabase';
 import { ensureProperty, type USPSValidationResult } from '../../../lib/usps';
@@ -415,12 +416,22 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
       {step === 6 && (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-text">Anything else?</h2>
-          <Textarea
-            placeholder="Anything else future tenants should know?"
-            value={comment}
-            onChange={(e) => setComment(e.target.value.slice(0, 500))}
-            helperText={`${comment.length}/500 characters`}
-          />
+          <div>
+            <Textarea
+              placeholder="Anything else future tenants should know?"
+              value={comment}
+              onChange={(e) => setComment(e.target.value.slice(0, 500))}
+              helperText={`${comment.length}/500 characters`}
+            />
+            {comment.trim().length > 20 && (
+              <div className="mt-2">
+                <ReviewAIHelper
+                  reviewText={comment}
+                  onAccept={(improved) => setComment(improved.slice(0, 500))}
+                />
+              </div>
+            )}
+          </div>
           <div className="flex gap-3">
             <Button variant="ghost" size="sm" onClick={() => setStep(5)}>
               ← Back
