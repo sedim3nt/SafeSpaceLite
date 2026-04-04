@@ -5,7 +5,8 @@
 ```
 /#/                          → Homepage (national, address search, city grid, feature cards)
 /#/boulder                   → Boulder landing page (dedicated, laws, reviews, resources)
-/#/city/:slug                → City page (any of 11 cities — rights, deadlines, enforcement)
+/#/cities                    → Browse all 451+ cities (search, state filter, score filter)
+/#/city/:slug                → City page (451+ cities — deep data for 11, research data for rest)
 /#/property-lookup           → Safety Check (address → rights + reviews + report actions)
 /#/property/:propertyId      → Property detail (community comments, safety history)
 /#/review                    → Leave a Review (7-category Likert, 5 relationship types)
@@ -17,21 +18,13 @@
 /#/advocate                  → AI Tenant Advocate (situation analyzer, template letters)
 ```
 
-## Supported Cities (/#/city/:slug)
+## City Coverage
 
-| City | Slug | State |
-|------|------|-------|
-| Boulder | boulder (redirects to /boulder) | CO |
-| Fort Collins | fort-collins | CO |
-| Ann Arbor | ann-arbor | MI |
-| Eugene | eugene | OR |
-| Santa Cruz | santa-cruz | CA |
-| Somerville | somerville | MA |
-| Olympia | olympia | WA |
-| Portland | portland-me | ME |
-| Asheville | asheville | NC |
-| Burlington | burlington | VT |
-| Ithaca | ithaca | NY |
+- **451+ cities** with research data (laws, scores, deadlines, enforcement)
+- **11 cities** with deep data (emergency contacts, detailed rights, inspections):
+  Boulder CO, Fort Collins CO, Ann Arbor MI, Eugene OR, Santa Cruz CA,
+  Somerville MA, Olympia WA, Portland ME, Asheville NC, Burlington VT, Ithaca NY
+- **54 states/territories** with state-level tenant protection profiles
 
 ## User Flows
 
