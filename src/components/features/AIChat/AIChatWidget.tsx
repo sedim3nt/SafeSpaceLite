@@ -89,7 +89,7 @@ export function AIChatWidget() {
       }
       if (line.trim() === '') return <div key={i} className="h-1.5" />;
       if (line.startsWith('⚖️')) {
-        return <p key={i} className="text-xs italic opacity-70 mt-2 pt-2 border-t border-white/10">{line}</p>;
+        return <p key={i} className="text-sm italic opacity-70 mt-2 pt-2 border-t border-white/10">{line}</p>;
       }
       return <p key={i} className="leading-relaxed">{renderInline(line)}</p>;
     });
@@ -123,7 +123,7 @@ export function AIChatWidget() {
             <span className="text-xl">🛡️</span>
             <div>
               <p className="text-sm font-semibold text-white">Tenant Advocate</p>
-              <p className="text-xs text-white/70">Colorado rental rights advisor</p>
+              <p className="text-sm text-white/70">Colorado rental rights advisor</p>
             </div>
           </div>
 
@@ -133,7 +133,7 @@ export function AIChatWidget() {
               <div className="text-center py-8 space-y-3">
                 <p className="text-2xl">🛡️</p>
                 <p className="text-sm font-medium text-text">Hi! I'm your Tenant Advocate.</p>
-                <p className="text-xs text-text-muted leading-relaxed px-4">
+                <p className="text-sm text-text-muted leading-relaxed px-4">
                   Ask me about your rental rights in Colorado. I know habitability standards, 
                   security deposits, evictions, ESA protections, and more.
                 </p>
@@ -146,7 +146,7 @@ export function AIChatWidget() {
                     <button
                       key={q}
                       onClick={() => { setInput(q); inputRef.current?.focus(); }}
-                      className="block w-full text-left px-3 py-2 text-xs rounded-lg border border-border bg-white hover:bg-sage-50 hover:border-sage-300 text-text-muted hover:text-text transition-all"
+                      className="block w-full text-left px-3 py-2 text-sm rounded-lg border border-border bg-white hover:bg-sage-50 hover:border-sage-300 text-text-muted hover:text-text transition-all"
                     >
                       {q}
                     </button>
@@ -210,7 +210,7 @@ export function AIChatWidget() {
                 </svg>
               </button>
             </div>
-            <p className="text-[10px] text-text-muted/60 text-center mt-1.5">
+            <p className="text-sm text-text-muted/60 text-center mt-1.5">
               AI-powered · Not legal advice
             </p>
           </div>

@@ -76,7 +76,7 @@ export function AdvocatePage() {
             {isTemplateLetter && (
               <button
                 onClick={() => copyToClipboard(extractSection(response, 'Template Letter'), 'letter')}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-sage-100 text-sage-700 hover:bg-sage-200 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-sage-100 text-sage-700 hover:bg-sage-200 transition-colors"
               >
                 {copiedSection === 'letter' ? '✓ Copied!' : '📋 Copy Letter'}
               </button>
@@ -168,7 +168,7 @@ export function AdvocatePage() {
 
         {/* Example prompts */}
         <div>
-          <p className="text-xs font-medium text-text-muted mb-2 uppercase tracking-wide">
+          <p className="text-sm font-medium text-text-muted mb-2 uppercase tracking-wide">
             Example situations
           </p>
           <div className="flex flex-wrap gap-2">
@@ -176,7 +176,7 @@ export function AdvocatePage() {
               <button
                 key={example}
                 onClick={() => setSituation(example)}
-                className="px-3 py-1.5 text-xs rounded-full border border-border bg-surface text-text-muted hover:border-sage-300 hover:text-text hover:bg-sage-50 transition-all"
+                className="px-3 py-1.5 text-sm rounded-full border border-border bg-surface text-text-muted hover:border-sage-300 hover:text-text hover:bg-sage-50 transition-all"
               >
                 {example}
               </button>
@@ -207,7 +207,7 @@ export function AdvocatePage() {
         <Card variant="danger" className="text-sm">
           <p className="font-semibold text-danger mb-1">Analysis failed</p>
           <p className="text-text-muted">{error}</p>
-          <p className="text-xs text-text-muted mt-2">
+          <p className="text-sm text-text-muted mt-2">
             Make sure you have a working internet connection and try again.
           </p>
         </Card>
@@ -222,7 +222,7 @@ export function AdvocatePage() {
             </h2>
             <button
               onClick={() => copyToClipboard(response, 'full')}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-sage-100 text-sage-700 hover:bg-sage-200 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-sage-100 text-sage-700 hover:bg-sage-200 transition-colors"
             >
               {copiedSection === 'full' ? '✓ Copied!' : '📋 Copy All'}
             </button>
@@ -232,7 +232,7 @@ export function AdvocatePage() {
       )}
 
       {/* Always-visible disclaimer */}
-      <div className="text-xs text-text-muted pb-8">
+      <div className="text-sm text-text-muted pb-8">
         ⚖️ This is general information, not legal advice. Consult a tenant rights attorney for your situation.
         <br />
         SafeSpace Tenant Advocate is powered by AI and may occasionally produce inaccurate information.

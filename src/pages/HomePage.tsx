@@ -10,7 +10,7 @@ function SafetyScoreBadge({ score }: { score: number }) {
   const color = score >= 7 ? 'bg-green-100 text-green-800' : score >= 4 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800';
   const label = score >= 7 ? 'Strong' : score >= 4 ? 'Moderate' : 'Weak';
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${color}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-semibold ${color}`}>
       {score}/10 — {label} Protections
     </span>
   );
@@ -220,7 +220,7 @@ export function HomePage() {
                     </Link>
                   </div>
                   <Link to="/know-your-rights">
-                    <p className="text-xs text-sage-600 hover:underline cursor-pointer mt-1">
+                    <p className="text-sm text-sage-600 hover:underline cursor-pointer mt-1">
                       → View general tenant rights for {result.state}
                     </p>
                   </Link>
@@ -236,7 +236,7 @@ export function HomePage() {
         {stats.map((s) => (
           <Card key={s.label} className="text-center !p-4">
             <p className="text-2xl sm:text-3xl font-bold text-sage-700">{s.value}</p>
-            <p className="text-xs text-text-muted mt-1">{s.label}</p>
+            <p className="text-sm text-text-muted mt-1">{s.label}</p>
           </Card>
         ))}
       </section>
@@ -278,14 +278,14 @@ export function HomePage() {
                 <div className="flex items-start justify-between">
                   <h3 className="text-lg font-semibold text-ink">{city.name}, {city.stateCode}</h3>
                   {city.university && (
-                    <span className="text-xs bg-sage-50 text-sage-600 px-2 py-0.5 rounded-full">🎓</span>
+                    <span className="text-sm bg-sage-50 text-sage-600 px-2 py-0.5 rounded-full">🎓</span>
                   )}
                 </div>
                 <p className="mt-1 text-sm text-text-muted">
                   {city.renterPercent}% renters · {city.population.toLocaleString()} pop.
                 </p>
                 <p className="mt-2 text-sm text-sage-700">{city.keyLaws[0]?.name}</p>
-                <p className="mt-2 text-xs font-medium text-sage-600">Explore →</p>
+                <p className="mt-2 text-sm font-medium text-sage-600">Explore →</p>
               </Card>
             </Link>
           ))}
@@ -342,7 +342,7 @@ export function HomePage() {
       </section>
 
       {/* Legal */}
-      <p className="text-center text-xs text-text-muted pb-4">
+      <p className="text-center text-sm text-text-muted pb-4">
         ⚖️ SafeSpace provides general information, not legal advice. Consult a tenant rights attorney for your specific situation.
       </p>
     </div>

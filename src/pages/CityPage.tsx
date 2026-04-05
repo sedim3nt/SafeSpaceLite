@@ -74,15 +74,15 @@ function ResearchCityPage({ city }: { city: ResearchCity }) {
         <Card>
           <div className="divide-y divide-border">
             <div className="flex items-center justify-between py-3">
-              <span className="inline-flex items-center rounded-full bg-danger-bg px-2.5 py-0.5 text-xs font-medium text-danger">Emergency</span>
+              <span className="inline-flex items-center rounded-full bg-danger-bg px-2.5 py-0.5 text-sm font-medium text-danger">Emergency</span>
               <span className="text-lg font-bold text-danger">{city.repairDeadlines.emergency}</span>
             </div>
             <div className="flex items-center justify-between py-3">
-              <span className="inline-flex items-center rounded-full bg-bamboo-50 px-2.5 py-0.5 text-xs font-medium text-bamboo-800">Urgent</span>
+              <span className="inline-flex items-center rounded-full bg-bamboo-50 px-2.5 py-0.5 text-sm font-medium text-bamboo-800">Urgent</span>
               <span className="text-lg font-bold text-bamboo-700">{city.repairDeadlines.urgent}</span>
             </div>
             <div className="flex items-center justify-between py-3">
-              <span className="inline-flex items-center rounded-full bg-sage-50 px-2.5 py-0.5 text-xs font-medium text-sage-700">Standard</span>
+              <span className="inline-flex items-center rounded-full bg-sage-50 px-2.5 py-0.5 text-sm font-medium text-sage-700">Standard</span>
               <span className="text-lg font-bold text-sage-700">{city.repairDeadlines.standard}</span>
             </div>
           </div>
@@ -97,7 +97,7 @@ function ResearchCityPage({ city }: { city: ResearchCity }) {
             {city.keyLaws.map((law, i) => (
               <Card key={i}>
                 <h3 className="font-semibold text-ink">{law.name}</h3>
-                {law.citation && <p className="mt-1 text-xs font-mono text-sage-600">{law.citation}</p>}
+                {law.citation && <p className="mt-1 text-sm font-mono text-sage-600">{law.citation}</p>}
                 <p className="mt-2 text-sm text-text-muted">{law.summary}</p>
               </Card>
             ))}
@@ -212,7 +212,7 @@ export function CityPage() {
               {deepCity.mandatoryInspections ? 'Yes' : 'No'}
             </p>
             {deepCity.mandatoryInspectionsDescription && (
-              <p className="mt-1 text-xs text-text-muted">{deepCity.mandatoryInspectionsDescription}</p>
+              <p className="mt-1 text-sm text-text-muted">{deepCity.mandatoryInspectionsDescription}</p>
             )}
           </Card>
           <Card className="text-center">
@@ -243,21 +243,21 @@ export function CityPage() {
             <div className="divide-y divide-border">
               <div className="flex items-center justify-between py-3">
                 <div>
-                  <span className="inline-flex items-center rounded-full bg-danger-bg px-2.5 py-0.5 text-xs font-medium text-danger">Emergency</span>
+                  <span className="inline-flex items-center rounded-full bg-danger-bg px-2.5 py-0.5 text-sm font-medium text-danger">Emergency</span>
                   <p className="mt-1 text-sm text-text-muted">{deepCity.deadlines.emergency.label}</p>
                 </div>
                 <span className="text-lg font-bold text-danger">{deepCity.deadlines.emergency.hours}h</span>
               </div>
               <div className="flex items-center justify-between py-3">
                 <div>
-                  <span className="inline-flex items-center rounded-full bg-bamboo-50 px-2.5 py-0.5 text-xs font-medium text-bamboo-800">Urgent</span>
+                  <span className="inline-flex items-center rounded-full bg-bamboo-50 px-2.5 py-0.5 text-sm font-medium text-bamboo-800">Urgent</span>
                   <p className="mt-1 text-sm text-text-muted">{deepCity.deadlines.urgent.label}</p>
                 </div>
                 <span className="text-lg font-bold text-bamboo-700">{deepCity.deadlines.urgent.hours}h</span>
               </div>
               <div className="flex items-center justify-between py-3">
                 <div>
-                  <span className="inline-flex items-center rounded-full bg-sage-50 px-2.5 py-0.5 text-xs font-medium text-sage-700">Standard</span>
+                  <span className="inline-flex items-center rounded-full bg-sage-50 px-2.5 py-0.5 text-sm font-medium text-sage-700">Standard</span>
                   <p className="mt-1 text-sm text-text-muted">{deepCity.deadlines.standard.label}</p>
                 </div>
                 <span className="text-lg font-bold text-sage-700">{deepCity.deadlines.standard.hours}h</span>
@@ -273,7 +273,7 @@ export function CityPage() {
             {deepCity.keyLaws.map((law) => (
               <Card key={law.citation}>
                 <h3 className="font-semibold text-ink">{law.name}</h3>
-                <p className="mt-1 text-xs font-mono text-sage-600">{law.citation}</p>
+                <p className="mt-1 text-sm font-mono text-sage-600">{law.citation}</p>
                 <p className="mt-2 text-sm text-text-muted">{law.summary}</p>
               </Card>
             ))}
@@ -290,8 +290,8 @@ export function CityPage() {
               <a href={`tel:${deepCity.enforcement.healthDept.phone.replace(/\D/g, '')}`} className="mt-1 block text-sm text-sage-600 hover:underline">
                 {deepCity.enforcement.healthDept.phone}
               </a>
-              {deepCity.enforcement.healthDept.address && <p className="mt-1 text-xs text-text-muted">{deepCity.enforcement.healthDept.address}</p>}
-              {deepCity.enforcement.healthDept.hours && <p className="mt-1 text-xs text-text-muted">{deepCity.enforcement.healthDept.hours}</p>}
+              {deepCity.enforcement.healthDept.address && <p className="mt-1 text-sm text-text-muted">{deepCity.enforcement.healthDept.address}</p>}
+              {deepCity.enforcement.healthDept.hours && <p className="mt-1 text-sm text-text-muted">{deepCity.enforcement.healthDept.hours}</p>}
             </Card>
             <Card>
               <h3 className="font-semibold text-ink">Code Enforcement</h3>
@@ -299,8 +299,8 @@ export function CityPage() {
               <a href={`tel:${deepCity.enforcement.codeEnforcement.phone.replace(/\D/g, '')}`} className="mt-1 block text-sm text-sage-600 hover:underline">
                 {deepCity.enforcement.codeEnforcement.phone}
               </a>
-              {deepCity.enforcement.codeEnforcement.address && <p className="mt-1 text-xs text-text-muted">{deepCity.enforcement.codeEnforcement.address}</p>}
-              {deepCity.enforcement.codeEnforcement.hours && <p className="mt-1 text-xs text-text-muted">{deepCity.enforcement.codeEnforcement.hours}</p>}
+              {deepCity.enforcement.codeEnforcement.address && <p className="mt-1 text-sm text-text-muted">{deepCity.enforcement.codeEnforcement.address}</p>}
+              {deepCity.enforcement.codeEnforcement.hours && <p className="mt-1 text-sm text-text-muted">{deepCity.enforcement.codeEnforcement.hours}</p>}
             </Card>
           </div>
         </section>

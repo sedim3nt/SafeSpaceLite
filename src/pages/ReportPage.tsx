@@ -342,7 +342,7 @@ export function ReportPage() {
               maxLength={5000}
               required
             />
-            <p className="text-xs text-text-muted">{form.description.length}/5000 characters</p>
+            <p className="text-sm text-text-muted">{form.description.length}/5000 characters</p>
 
             <div className="grid gap-6 md:grid-cols-2">
               <Select
@@ -369,7 +369,7 @@ export function ReportPage() {
                 onChange={e => updateField('evidenceDetails', e.target.value)}
                 maxLength={500}
               />
-              <p className="text-xs text-text-muted">{form.evidenceDetails.length}/500 characters</p>
+              <p className="text-sm text-text-muted">{form.evidenceDetails.length}/500 characters</p>
             </div>
 
             <div className="space-y-3 rounded-md border border-border p-4">
@@ -416,7 +416,7 @@ export function ReportPage() {
                       <button
                         type="button"
                         onClick={() => removePhoto(i)}
-                        className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-danger text-xs text-white"
+                        className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-danger text-sm text-white"
                       >
                         &times;
                       </button>
@@ -439,7 +439,7 @@ export function ReportPage() {
             {error && <p className="text-sm text-danger">{error}</p>}
 
             {!isHumanLikely && (
-              <p className="text-xs text-text-muted">
+              <p className="text-sm text-text-muted">
                 Please take a moment to fill out the form. Submissions are available after a brief delay.
               </p>
             )}

@@ -300,7 +300,7 @@ export function LegalNoticePage() {
             maxLength={3000}
             required
           />
-          <p className="text-xs text-text-muted">{form.description.length}/3000 characters</p>
+          <p className="text-sm text-text-muted">{form.description.length}/3000 characters</p>
 
           <Button onClick={handleGenerate} fullWidth disabled={!canGenerate}>
             Generate Legal Notice (PDF)

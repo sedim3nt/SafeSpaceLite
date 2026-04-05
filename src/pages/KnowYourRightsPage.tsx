@@ -144,7 +144,7 @@ export const KnowYourRightsPage: React.FC = () => {
                 {researchCity.keyLaws.map((law) => (
                   <div key={`${law.name}-${law.citation}`} className="rounded-lg bg-surface-muted p-3">
                     <p className="font-medium text-text">{law.name}</p>
-                    <p className="mt-1 text-xs text-text-muted">{law.citation}</p>
+                    <p className="mt-1 text-sm text-text-muted">{law.citation}</p>
                     <p className="mt-2 text-sm text-text-muted">{law.summary}</p>
                   </div>
                 ))}

@@ -72,7 +72,7 @@ export function Footer() {
         </div>
 
         <div className="mt-10 border-t border-bamboo-200 pt-8">
-          <p className="text-center text-xs text-text-muted">
+          <p className="text-center text-sm text-text-muted">
             &copy; {new Date().getFullYear()} SafeSpace. All rights reserved.
           </p>
         </div>

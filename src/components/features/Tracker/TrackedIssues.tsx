@@ -180,7 +180,7 @@ export const TrackedIssues: React.FC<TrackedIssuesProps> = ({ initialAddress = '
                       <p className="mt-1 text-sm text-text-muted">{issue.issueType}</p>
                     </div>
                     <span
-                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-sm font-medium ${
                         isOverdue ? 'bg-danger-bg text-danger border-danger/30' : getStatusColor(issue.status)
                       }`}
                     >

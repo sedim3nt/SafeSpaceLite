@@ -191,7 +191,7 @@ export function PropertyLookupPage() {
               <li>3. Switch to the rental experience tab for landlord reviews and ratings.</li>
               <li>4. Report a new issue or start tracking deadlines from the property view.</li>
             </ul>
-            <p className="text-xs text-text-muted">No account is required to search and review public property records.</p>
+            <p className="text-sm text-text-muted">No account is required to search and review public property records.</p>
           </div>
         </div>
       )}

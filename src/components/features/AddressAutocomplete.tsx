@@ -243,7 +243,7 @@ export function AddressAutocomplete({
                       <span className="block text-sm font-medium text-ink">
                         {p.structured_formatting.main_text}
                       </span>
-                      <span className="block text-xs text-text-muted">
+                      <span className="block text-sm text-text-muted">
                         {p.structured_formatting.secondary_text}
                       </span>
                     </button>
@@ -266,10 +266,10 @@ export function AddressAutocomplete({
         </div>
         {error && <p className="text-sm text-danger">{error}</p>}
         {autocompleteMessage && (
-          <p className="text-xs text-text-muted">{autocompleteMessage}</p>
+          <p className="text-sm text-text-muted">{autocompleteMessage}</p>
         )}
         {!mapsReady && GOOGLE_PLACES_KEY && !autocompleteMessage && (
-          <p className="text-xs text-text-muted">Loading live address suggestions...</p>
+          <p className="text-sm text-text-muted">Loading live address suggestions...</p>
         )}
       </form>
     </div>

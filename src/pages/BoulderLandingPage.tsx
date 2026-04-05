@@ -157,19 +157,19 @@ export function BoulderLandingPage() {
       <section className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card className="text-center !p-4">
           <p className="text-2xl sm:text-3xl font-bold text-sage-700">{BOULDER_STATS.renterPct}</p>
-          <p className="text-xs text-text-muted mt-1">Renter Population</p>
+          <p className="text-sm text-text-muted mt-1">Renter Population</p>
         </Card>
         <Card className="text-center !p-4">
           <p className="text-2xl sm:text-3xl font-bold text-sage-700">{BOULDER_STATS.cuStudents}</p>
-          <p className="text-xs text-text-muted mt-1">CU Students</p>
+          <p className="text-sm text-text-muted mt-1">CU Students</p>
         </Card>
         <Card className="text-center !p-4">
           <p className="text-2xl sm:text-3xl font-bold text-sage-700">{BOULDER_STATS.medianRent}</p>
-          <p className="text-xs text-text-muted mt-1">{BOULDER_STATS.medianRentSource}</p>
+          <p className="text-sm text-text-muted mt-1">{BOULDER_STATS.medianRentSource}</p>
         </Card>
         <Card className="text-center !p-4">
           <p className="text-2xl sm:text-3xl font-bold text-sage-700">{city.keyLaws.length}+</p>
-          <p className="text-xs text-text-muted mt-1">Laws Protecting You</p>
+          <p className="text-sm text-text-muted mt-1">Laws Protecting You</p>
         </Card>
       </section>
 
@@ -197,7 +197,7 @@ export function BoulderLandingPage() {
                       {expandedLaw === law.id ? '−' : '+'}
                     </span>
                   </div>
-                  <p className="text-xs font-mono text-sage-600 mt-0.5">{law.citation}</p>
+                  <p className="text-sm font-mono text-sage-600 mt-0.5">{law.citation}</p>
                   {expandedLaw === law.id && (
                     <p className="mt-3 text-sm text-text leading-relaxed">
                       {law.plain}
@@ -218,7 +218,7 @@ export function BoulderLandingPage() {
           <div className="divide-y divide-border">
             <div className="flex items-center justify-between py-4">
               <div>
-                <span className="inline-flex items-center rounded-full bg-danger-bg px-2.5 py-0.5 text-xs font-medium text-danger">
+                <span className="inline-flex items-center rounded-full bg-danger-bg px-2.5 py-0.5 text-sm font-medium text-danger">
                   Emergency
                 </span>
                 <p className="mt-1.5 text-sm text-text-muted">{city.deadlines.emergency.label}</p>
@@ -227,7 +227,7 @@ export function BoulderLandingPage() {
             </div>
             <div className="flex items-center justify-between py-4">
               <div>
-                <span className="inline-flex items-center rounded-full bg-bamboo-50 px-2.5 py-0.5 text-xs font-medium text-bamboo-800">
+                <span className="inline-flex items-center rounded-full bg-bamboo-50 px-2.5 py-0.5 text-sm font-medium text-bamboo-800">
                   Urgent
                 </span>
                 <p className="mt-1.5 text-sm text-text-muted">{city.deadlines.urgent.label}</p>
@@ -236,7 +236,7 @@ export function BoulderLandingPage() {
             </div>
             <div className="flex items-center justify-between py-4">
               <div>
-                <span className="inline-flex items-center rounded-full bg-sage-50 px-2.5 py-0.5 text-xs font-medium text-sage-700">
+                <span className="inline-flex items-center rounded-full bg-sage-50 px-2.5 py-0.5 text-sm font-medium text-sage-700">
                   Standard
                 </span>
                 <p className="mt-1.5 text-sm text-text-muted">{city.deadlines.standard.label}</p>
@@ -292,10 +292,10 @@ export function BoulderLandingPage() {
               {city.enforcement.healthDept.phone}
             </a>
             {city.enforcement.healthDept.address && (
-              <p className="mt-1 text-xs text-text-muted">{city.enforcement.healthDept.address}</p>
+              <p className="mt-1 text-sm text-text-muted">{city.enforcement.healthDept.address}</p>
             )}
             {city.enforcement.healthDept.hours && (
-              <p className="mt-1 text-xs text-text-muted">{city.enforcement.healthDept.hours}</p>
+              <p className="mt-1 text-sm text-text-muted">{city.enforcement.healthDept.hours}</p>
             )}
           </Card>
           <Card>
@@ -305,12 +305,12 @@ export function BoulderLandingPage() {
               {city.enforcement.codeEnforcement.phone}
             </a>
             {city.enforcement.codeEnforcement.email && (
-              <a href={`mailto:${city.enforcement.codeEnforcement.email}`} className="mt-1 block text-xs text-sage-600 hover:underline">
+              <a href={`mailto:${city.enforcement.codeEnforcement.email}`} className="mt-1 block text-sm text-sage-600 hover:underline">
                 {city.enforcement.codeEnforcement.email}
               </a>
             )}
             {city.enforcement.codeEnforcement.address && (
-              <p className="mt-1 text-xs text-text-muted">{city.enforcement.codeEnforcement.address}</p>
+              <p className="mt-1 text-sm text-text-muted">{city.enforcement.codeEnforcement.address}</p>
             )}
           </Card>
         </div>
@@ -328,7 +328,7 @@ export function BoulderLandingPage() {
           {LOCAL_RESOURCES.map((resource) => (
             <Card key={resource.name} className="space-y-2">
               <h3 className="font-semibold text-ink text-sm">{resource.name}</h3>
-              <p className="text-xs text-text-muted">{resource.desc}</p>
+              <p className="text-sm text-text-muted">{resource.desc}</p>
               <div className="flex flex-wrap items-center gap-3 pt-1">
                 <a
                   href={`tel:${resource.phone.replace(/\D/g, '')}`}
@@ -341,7 +341,7 @@ export function BoulderLandingPage() {
                     href={resource.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-sage-600 hover:underline"
+                    className="text-sm text-sage-600 hover:underline"
                   >
                     Website →
                   </a>
@@ -383,7 +383,7 @@ export function BoulderLandingPage() {
       </section>
 
       {/* Legal disclaimer */}
-      <p className="text-center text-xs text-text-muted pb-4">
+      <p className="text-center text-sm text-text-muted pb-4">
         ⚖️ SafeSpace provides general information, not legal advice. Consult a tenant rights attorney for your specific situation.
       </p>
     </div>

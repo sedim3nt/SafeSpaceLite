@@ -368,7 +368,7 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
               <div key={cat.key} className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-sm">
                 <div>
                   <p className="text-sm font-semibold text-text">{cat.label}</p>
-                  <p className="text-xs text-text-muted">{cat.desc}</p>
+                  <p className="text-sm text-text-muted">{cat.desc}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="grid grid-cols-5 gap-2">
@@ -401,7 +401,7 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
                       return (
                         <span
                           key={label}
-                          className={`text-center text-[11px] leading-tight ${
+                          className={`text-center text-sm leading-tight ${
                             isSelected ? 'font-medium text-sage-700' : 'text-text-muted'
                           }`}
                         >
@@ -529,7 +529,7 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
                   {selectedTags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-2 py-0.5 rounded-full bg-sage-100 text-sage-700 text-xs"
+                      className="px-2 py-0.5 rounded-full bg-sage-100 text-sage-700 text-sm"
                     >
                       {tag}
                     </span>

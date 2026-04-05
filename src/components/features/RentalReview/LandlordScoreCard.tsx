@@ -136,7 +136,7 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0, onLoadingChang
                 {landlord.management_company && (
                   <p className="text-sm text-text-muted">{landlord.management_company}</p>
                 )}
-                <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-bamboo-100 text-bamboo-700 text-xs font-medium">
+                <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-bamboo-100 text-bamboo-700 text-sm font-medium">
                   {badge.icon} {badge.label}
                 </span>
               </div>
@@ -204,7 +204,7 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0, onLoadingChang
           return (
             <Card key={review.id} className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-bamboo-100 text-bamboo-700 text-xs font-medium">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-bamboo-100 text-bamboo-700 text-sm font-medium">
                   {badge.icon} {badge.label}
                 </span>
                 <span className="text-sm font-semibold text-text">{avg} / 5</span>
@@ -224,7 +224,7 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0, onLoadingChang
                 <p className="text-sm text-text leading-relaxed">{review.comment}</p>
               )}
 
-              <p className="text-xs text-text-muted">
+              <p className="text-sm text-text-muted">
                 {new Date(review.created_at).toLocaleDateString('en-US', {
                   year: 'numeric', month: 'short', day: 'numeric',
                 })}
@@ -234,15 +234,15 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0, onLoadingChang
               {reviewResponse ? (
                 <div className="rounded-lg border border-teal-200 bg-teal-50 p-4">
                   <div className="mb-2 flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-medium text-teal-700">
+                    <span className="inline-flex items-center rounded-full bg-teal-100 px-2.5 py-0.5 text-sm font-medium text-teal-700">
                       Landlord Response
                     </span>
                     {reviewResponse.is_verified && (
-                      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-sm font-medium text-emerald-700">
                         Verified Owner
                       </span>
                     )}
-                    <time className="ml-auto text-xs text-text-muted">
+                    <time className="ml-auto text-sm text-text-muted">
                       {new Date(reviewResponse.created_at).toLocaleDateString()}
                     </time>
                   </div>
@@ -253,7 +253,7 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0, onLoadingChang
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-medium text-text">Own or manage this property?</p>
-                      <p className="text-xs text-text-muted">
+                      <p className="text-sm text-text-muted">
                         Add one paid public response to this rental review.
                       </p>
                     </div>

@@ -20,7 +20,7 @@ export const EmergencyContacts: React.FC = () => {
                 {contact.phone}
               </a>
               <p className="text-sm text-text-muted">{contact.description}</p>
-              {contact.hours && <p className="text-xs text-gray-500">{contact.hours}</p>}
+              {contact.hours && <p className="text-sm text-gray-500">{contact.hours}</p>}
             </div>
           </Card>
         ))}

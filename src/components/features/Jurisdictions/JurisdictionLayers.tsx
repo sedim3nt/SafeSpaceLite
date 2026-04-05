@@ -65,7 +65,7 @@ export function JurisdictionLayers({
                   <h4 className="text-lg font-semibold text-text">{layer.name}</h4>
                   <p className="mt-1 text-sm text-text-muted">{layer.summary}</p>
                 </div>
-                <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${style.badge}`}>
+                <span className={`inline-flex rounded-full px-2.5 py-1 text-sm font-semibold ${style.badge}`}>
                   {style.label}
                 </span>
               </div>
@@ -78,12 +78,12 @@ export function JurisdictionLayers({
                       <div key={`${law.name}-${law.citation}`} className="rounded-lg bg-surface-muted p-3">
                         <div className="flex flex-col gap-1">
                           <p className="text-sm font-medium text-text">{law.name}</p>
-                          <p className="text-xs text-text-muted">{law.citation}</p>
+                          <p className="text-sm text-text-muted">{law.citation}</p>
                         </div>
                         <p className="mt-2 text-sm text-text-muted">{law.summary}</p>
                         {law.url && (
                           <a
-                            className="mt-2 inline-flex text-xs font-medium text-sage-700 hover:underline"
+                            className="mt-2 inline-flex text-sm font-medium text-sage-700 hover:underline"
                             href={law.url}
                             target="_blank"
                             rel="noreferrer"
@@ -105,7 +105,7 @@ export function JurisdictionLayers({
                       <div key={resource.name} className="rounded-lg border border-border p-3">
                         <p className="text-sm font-medium text-text">{resource.name}</p>
                         <p className="mt-1 text-sm text-text-muted">{resource.description}</p>
-                        <div className="mt-2 flex flex-wrap gap-3 text-xs">
+                        <div className="mt-2 flex flex-wrap gap-3 text-sm">
                           {resource.phone && (
                             <a className="text-sage-700 hover:underline" href={`tel:${resource.phone.replace(/\D/g, '')}`}>
                               {resource.phone}

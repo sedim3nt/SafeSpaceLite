@@ -99,10 +99,10 @@ export function PropertyDetails({
                       <span className="font-medium text-text">
                         {issueLabels[report.issue_type] || report.issue_type}
                       </span>
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${severity.className}`}>
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium ${severity.className}`}>
                         {severity.label}
                       </span>
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${evidenceTier.style}`}>
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium ${evidenceTier.style}`}>
                         {evidenceTier.label}
                       </span>
                     </div>
@@ -113,7 +113,7 @@ export function PropertyDetails({
 
                   <p className="text-text-muted">{report.description}</p>
 
-                  <div className="flex flex-wrap gap-2 text-xs text-text-muted">
+                  <div className="flex flex-wrap gap-2 text-sm text-text-muted">
                     {report.issue_started_at && (
                       <span className="rounded-full bg-surface-muted px-2.5 py-1">
                         Issue started: {new Date(report.issue_started_at).toLocaleDateString()}
@@ -128,7 +128,7 @@ export function PropertyDetails({
 
                   {report.evidence_details && (
                     <div className="rounded-lg bg-surface-muted p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                      <p className="text-sm font-semibold uppercase tracking-wide text-text-muted">
                         Evidence summary
                       </p>
                       <p className="mt-1 text-sm text-text">{report.evidence_details}</p>
@@ -150,21 +150,21 @@ export function PropertyDetails({
                   )}
 
                   {report.is_anonymous && (
-                    <p className="text-xs text-text-muted italic">Reported anonymously</p>
+                    <p className="text-sm text-text-muted italic">Reported anonymously</p>
                   )}
 
                   {rebuttal && (
                     <div className="mt-3 rounded-lg border border-teal-200 bg-teal-50 p-4">
                       <div className="mb-2 flex items-center gap-2">
-                        <span className="inline-flex items-center rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-medium text-teal-700">
+                        <span className="inline-flex items-center rounded-full bg-teal-100 px-2.5 py-0.5 text-sm font-medium text-teal-700">
                           Landlord Response
                         </span>
                         {rebuttal.is_verified && (
-                          <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                          <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-sm font-medium text-emerald-700">
                             Verified Owner
                           </span>
                         )}
-                        <time className="ml-auto text-xs text-text-muted">
+                        <time className="ml-auto text-sm text-text-muted">
                           {new Date(rebuttal.created_at).toLocaleDateString()}
                         </time>
                       </div>
@@ -177,7 +177,7 @@ export function PropertyDetails({
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <p className="text-sm font-medium text-text">Own or manage this property?</p>
-                          <p className="text-xs text-text-muted">
+                          <p className="text-sm text-text-muted">
                             Add one paid public response to this safety report.
                           </p>
                         </div>

@@ -91,7 +91,7 @@ export function LandlordResponseForm({
           maxLength={1000}
           required
         />
-        <p className="text-xs text-text-muted">{body.length}/1000 characters</p>
+        <p className="text-sm text-text-muted">{body.length}/1000 characters</p>
 
         {error && <p className="text-sm text-danger">{error}</p>}
 

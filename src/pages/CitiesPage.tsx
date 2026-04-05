@@ -6,7 +6,7 @@ import { getAllResearchCities, getDeepCities, getStatesWithCities, hasDeepData, 
 function ScoreBadge({ score }: { score: number }) {
   const color = score >= 7 ? 'bg-green-100 text-green-800' : score >= 4 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800';
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${color}`}>
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-sm font-semibold ${color}`}>
       {score}/10
     </span>
   );
@@ -111,18 +111,18 @@ export function CitiesPage() {
                         <div>
                           <h3 className="font-semibold text-ink text-sm">{city.city}</h3>
                           {city.population > 0 && (
-                            <p className="text-xs text-text-muted">{city.population.toLocaleString()} pop.</p>
+                            <p className="text-sm text-text-muted">{city.population.toLocaleString()} pop.</p>
                           )}
                         </div>
                         <div className="flex items-center gap-1.5">
                           {isDeep && (
-                            <span className="text-xs bg-sage-100 text-sage-700 px-1.5 py-0.5 rounded-full" title="Full data available">★</span>
+                            <span className="text-sm bg-sage-100 text-sage-700 px-1.5 py-0.5 rounded-full" title="Full data available">★</span>
                           )}
                           <ScoreBadge score={city.tenantProtectionScore} />
                         </div>
                       </div>
                       {city.rentControlExists && (
-                        <p className="text-xs text-sage-600 mt-1">Rent control active</p>
+                        <p className="text-sm text-sage-600 mt-1">Rent control active</p>
                       )}
                     </Card>
                   </Link>

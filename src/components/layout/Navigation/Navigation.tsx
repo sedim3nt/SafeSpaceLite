@@ -82,7 +82,7 @@ export function Navigation({ mobile = false, onNavigate }: NavigationProps) {
           aria-haspopup="menu"
         >
           Tools
-          <span className={`text-xs transition-transform duration-200 ${toolsOpen ? 'rotate-180' : ''}`}>▾</span>
+          <span className={`text-sm transition-transform duration-200 ${toolsOpen ? 'rotate-180' : ''}`}>▾</span>
         </button>
 
         {toolsOpen && (

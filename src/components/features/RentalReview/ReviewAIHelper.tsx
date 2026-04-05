@@ -44,7 +44,7 @@ export function ReviewAIHelper({ reviewText, onAccept }: ReviewAIHelperProps) {
         type="button"
         onClick={improve}
         disabled={!reviewText.trim() || loading}
-        className="flex items-center gap-1.5 text-xs font-medium text-sage-600 hover:text-sage-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="flex items-center gap-1.5 text-sm font-medium text-sage-600 hover:text-sage-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
         {loading ? (
           <>
@@ -66,7 +66,7 @@ export function ReviewAIHelper({ reviewText, onAccept }: ReviewAIHelperProps) {
         </h4>
         <button
           onClick={() => { setExpanded(false); setResult(''); }}
-          className="text-xs text-text-muted hover:text-text"
+          className="text-sm text-text-muted hover:text-text"
         >
           ✕ Close
         </button>
