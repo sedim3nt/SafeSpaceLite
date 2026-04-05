@@ -267,10 +267,9 @@ export function HomePage() {
 
       {/* City Grid */}
       <section>
-        <h2 className="text-2xl font-bold text-ink text-center mb-2">Cities with Full Coverage</h2>
+        <h2 className="text-2xl font-bold text-ink text-center mb-2">Featured City Guides</h2>
         <p className="text-center text-text-muted mb-8 max-w-xl mx-auto">
-          Deep local data — laws, deadlines, enforcement contacts, emergency resources.
-          {dbStats.totalCities - cities.length} more cities available in our research database.
+          SafeSpace covers {dbStats.totalCities}+ U.S. cities. These featured guides include the strongest local detail, deadlines, and enforcement resources.
         </p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {cities.map((city) => (

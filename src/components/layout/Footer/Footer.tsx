@@ -6,7 +6,7 @@ export function Footer() {
       <div className="mx-auto max-w-[1220px] px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-text">Emergency Contacts</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-text">Get Help</h3>
             <ul className="mt-4 space-y-3">
               <li>
                 <a href="tel:911" className="text-sm text-text-muted transition-colors hover:text-sage-600">
@@ -14,13 +14,13 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="tel:3034413460" className="text-sm text-text-muted transition-colors hover:text-sage-600">
-                  Boulder County Health — (303) 441-3460
+                <a href="tel:988" className="text-sm text-text-muted transition-colors hover:text-sage-600">
+                  988 — Crisis and Mental Health Support
                 </a>
               </li>
               <li>
-                <a href="tel:3034427060" className="text-sm text-text-muted transition-colors hover:text-sage-600">
-                  EPRAS Mediation — (303) 442-7060
+                <a href="tel:211" className="text-sm text-text-muted transition-colors hover:text-sage-600">
+                  211 — Local Housing and Community Services
                 </a>
               </li>
             </ul>
@@ -55,7 +55,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="mailto:hello@spirittree.dev" className="text-sm text-text-muted transition-colors hover:text-sage-600">
+                <a href="mailto:terraloam.eye@gmail.com" className="text-sm text-text-muted transition-colors hover:text-sage-600">
                   Contact SafeSpace
                 </a>
               </li>
