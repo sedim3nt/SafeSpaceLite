@@ -154,7 +154,7 @@ export function AdvocatePage() {
           🛡️ Tenant Advocate
         </h1>
         <p className="text-lg text-text-muted max-w-xl mx-auto">
-          Describe your rental situation and get an analysis of your rights under Colorado law,
+          Describe your rental situation anywhere in the U.S. and get an analysis of the laws that apply,
           recommended next steps, and a template letter.
         </p>
       </div>

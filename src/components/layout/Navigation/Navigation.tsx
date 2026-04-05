@@ -13,7 +13,7 @@ export function Navigation({ mobile = false, onNavigate }: NavigationProps) {
     { name: 'AI Advocate', href: '/advocate' },
     { name: 'Emergency', href: '/emergency-guide', urgent: true },
     { name: 'Rights', href: '/know-your-rights' },
-    { name: 'Cities', href: '/#cities' },
+    { name: 'Cities', href: '/cities' },
   ];
 
   const baseClasses = mobile
@@ -23,7 +23,10 @@ export function Navigation({ mobile = false, onNavigate }: NavigationProps) {
   return (
     <nav className={mobile ? 'space-y-1' : 'flex space-x-1'}>
       {navItems.map((item) => {
-        const isActive = location.pathname === item.href;
+        const isActive =
+          item.href === '/cities'
+            ? location.pathname === '/cities' || location.pathname.startsWith('/city/')
+            : location.pathname === item.href;
         return (
           <Link
             key={item.name}

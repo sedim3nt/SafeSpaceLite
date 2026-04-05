@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { getAllResearchCities, getResearchCity, getResearchCityByName, getStateProfile, type ResearchCity } from '../data/cityDatabase';
 
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 const MODEL = 'anthropic/claude-haiku-4-5';
@@ -18,10 +19,67 @@ export interface AIMessage {
   content: string;
 }
 
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function inferResearchCityFromText(text: string): ResearchCity | null {
+  const normalized = text.toLowerCase();
+  const candidates = getAllResearchCities().filter((city) => {
+    const cityPattern = new RegExp(`\\b${escapeRegex(city.city.toLowerCase())}\\b`, 'i');
+    return cityPattern.test(normalized);
+  });
+
+  if (candidates.length === 1) return candidates[0];
+
+  const stateMatched = candidates.filter((city) => {
+    const stateProfile = getStateProfile(city.state);
+    const stateName = stateProfile?.state.toLowerCase();
+    return normalized.includes(city.state.toLowerCase()) || (stateName ? normalized.includes(stateName) : false);
+  });
+
+  if (stateMatched.length === 1) return stateMatched[0];
+
+  const byName = candidates.find((city) => getResearchCityByName(city.city, city.state));
+  return byName || null;
+}
+
+function buildJurisdictionContext(messages: AIMessage[]): string | null {
+  const latestUserMessage = [...messages].reverse().find((message) => message.role === 'user')?.content || '';
+  if (!latestUserMessage.trim()) return null;
+
+  const city = inferResearchCityFromText(latestUserMessage);
+  if (!city) return null;
+
+  const stateProfile = getStateProfile(city.state);
+  const knownCity = getResearchCity(city.slug);
+  const cityContext = knownCity || city;
+  const keyLaws = cityContext.keyLaws.slice(0, 4).map((law) => `${law.name} (${law.citation}): ${law.summary}`).join('\n- ');
+
+  return [
+    `SafeSpace location context for this request: ${cityContext.city}, ${cityContext.state}.`,
+    `Tenant protection score: ${cityContext.tenantProtectionScore}/10.`,
+    `Repair deadlines: emergency ${cityContext.repairDeadlines.emergency}, urgent ${cityContext.repairDeadlines.urgent}, standard ${cityContext.repairDeadlines.standard}.`,
+    `Security deposit rules: ${cityContext.securityDepositRules}.`,
+    stateProfile ? `State context: ${stateProfile.state} (${stateProfile.abbreviation}).` : null,
+    keyLaws ? `Known city/state laws:\n- ${keyLaws}` : null,
+    `Local enforcement contacts: health department ${cityContext.enforcement.healthDept.name} ${cityContext.enforcement.healthDept.phone}; code enforcement ${cityContext.enforcement.codeEnforcement.name} ${cityContext.enforcement.codeEnforcement.phone}.`,
+  ].filter(Boolean).join('\n');
+}
+
 export async function chatCompletion(messages: AIMessage[]): Promise<string> {
+  const jurisdictionContext = buildJurisdictionContext(messages);
+  const enrichedMessages = jurisdictionContext
+    ? [
+        ...messages.slice(0, 1),
+        { role: 'system' as const, content: jurisdictionContext },
+        ...messages.slice(1),
+      ]
+    : messages;
+
   const response = await client.chat.completions.create({
     model: MODEL,
-    messages,
+    messages: enrichedMessages,
     max_tokens: 4096,
     temperature: 0.3,
   });
@@ -30,24 +88,27 @@ export async function chatCompletion(messages: AIMessage[]): Promise<string> {
 
 // ── System Prompts ──
 
-export const ADVOCATE_SYSTEM_PROMPT = `You are SafeSpace's Tenant Advocate — an expert tenant rights advisor specializing in Colorado rental law. You know Colorado statutes cold, especially for these 11 covered cities: Boulder, Denver, Fort Collins, Aurora, Lakewood, Thornton, Westminster, Arvada, Centennial, Highlands Ranch, and Castle Rock.
+export const ADVOCATE_SYSTEM_PROMPT = `You are SafeSpace's Tenant Advocate — an expert U.S. tenant-rights advisor. You help renters anywhere in the United States, combining federal housing law with state and local rental rules whenever the jurisdiction is known.
 
 Your expertise includes:
-- Colorado Warranty of Habitability (CRS 38-12-501 through 38-12-511)
-- Security deposit rules (CRS 38-12-103, 38-12-104)
-- Eviction procedures and tenant protections (CRS 13-40-101 et seq.)
-- Emotional Support Animal (ESA) protections under FHA and Colorado law
-- Retaliation protections (CRS 38-12-509)
-- Lease termination rights for domestic violence survivors (CRS 38-12-402)
-- Local ordinances for covered cities (Boulder's rental licensing, Denver's STAR program, etc.)
-- Rent stabilization measures where applicable
-- Privacy and entry notice requirements (CRS 38-12-1004)
+- Federal tenant protections, including the Fair Housing Act, HUD guidance, disability accommodations, anti-retaliation concepts, habitability basics, and notice requirements where applicable
+- State landlord-tenant law across all U.S. states and D.C.
+- Local ordinances and city-specific housing rules when the city is known or SafeSpace has local coverage
+- Emotional Support Animal (ESA) and disability accommodation protections under federal, state, and local law
+- Repair and habitability timelines, security deposits, eviction procedure, retaliation protections, entry/privacy rules, and discrimination issues
+
+Reasoning rules:
+- Do not say you are limited to Colorado unless the user explicitly asks only about Colorado
+- If the user names a U.S. city or state, answer for that jurisdiction
+- If local law is uncertain, still provide the federal and state-level answer, then clearly label any city/county uncertainty
+- Use SafeSpace's local context when provided in system messages
+- If the user gives too little location information, ask for the city/state only after giving the highest-confidence general answer you can
 
 Communication style:
 - Clear, direct, and warm — like a tenant rights lawyer who genuinely cares
 - Always use harm reduction framing
 - For emergencies (no heat, no water, safety threats), lead with immediate safety steps
-- Recommend tenant hotlines: Colorado Legal Services (1-888-235-2674), 9to5 Colorado, local tenant unions
+- Recommend relevant legal aid, fair housing, HUD, and local enforcement contacts when they are known
 - Never pretend to be a lawyer
 
 CRITICAL: End every substantive response with this disclaimer:
@@ -58,7 +119,7 @@ export const SITUATION_ANALYZER_PROMPT = `${ADVOCATE_SYSTEM_PROMPT}
 When analyzing a tenant's situation, structure your response in these sections using markdown:
 
 ## 📋 Laws That Apply
-List specific Colorado statutes and local ordinances relevant to this situation. Include CRS numbers.
+List specific federal, state, and local laws relevant to this situation. Include statute or rule names when possible.
 
 ## ⚠️ Potential Violations
 Identify what violations may have occurred, if any. Be specific but measured.
@@ -70,10 +131,10 @@ Provide a numbered list of concrete actions the tenant should take, in order of 
 Write a professional letter the tenant can send to their landlord or relevant authority. Use [BRACKETS] for details the tenant needs to fill in. Make it firm but professional.
 
 ## 📞 Resources
-- Colorado Legal Services: 1-888-235-2674
-- HUD Housing Complaint: hud.gov/complaints
-- Colorado DORA: dora.colorado.gov
-- Include relevant local resources for the specific city if mentioned
+- HUD housing discrimination / disability resources when relevant
+- Relevant state legal aid or tenant organization
+- Relevant local enforcement or inspection contacts if the city is known
+- Include city- or state-specific resources when mentioned or available
 
 Always end with the legal disclaimer.`;
 

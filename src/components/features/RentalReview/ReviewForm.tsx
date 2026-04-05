@@ -2,9 +2,9 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { Button, Card, Input, Textarea } from '../../common';
 import { ProtectedAction } from '../../auth/ProtectedAction';
 import { ReviewAIHelper } from './ReviewAIHelper';
-import { PropertySearch } from '../PropertyLookup/PropertySearch';
+import { AddressAutocomplete } from '../AddressAutocomplete';
 import { supabase } from '../../../lib/supabase';
-import { ensureProperty, type AddressValidationResult } from '../../../lib/addressValidation';
+import { ensureProperty, validateAddress, type AddressValidationResult } from '../../../lib/addressValidation';
 import { useAuth } from '../../../contexts/AuthContext';
 import type { Landlord } from '../../../types/database';
 
@@ -64,6 +64,8 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
   const [step, setStep] = useState(initialPropertyId ? 2 : 1);
   const [propertyId, setPropertyId] = useState(initialPropertyId || '');
   const [address, setAddress] = useState(propertyAddress || '');
+  const [searchingAddress, setSearchingAddress] = useState(false);
+  const [searchError, setSearchError] = useState('');
   const [relationshipType, setRelationshipType] = useState('');
   const [landlordName, setLandlordName] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -95,7 +97,29 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
     const prop = await ensureProperty(result);
     setPropertyId(prop.id);
     setAddress(result.normalized);
+    setSearchError('');
     setStep(2);
+  };
+
+  const handleAddressSubmit = async (inputAddr: string) => {
+    setSearchingAddress(true);
+    setSearchError('');
+
+    try {
+      const result = await validateAddress(inputAddr);
+      if (!result.valid) {
+        setSearchError('Address not found. Please enter a valid US street address.');
+        return;
+      }
+
+      await handleAddressSearch(result);
+    } catch (err) {
+      setSearchError(
+        err instanceof Error ? err.message : 'Unable to validate this address right now. Please try again.',
+      );
+    } finally {
+      setSearchingAddress(false);
+    }
   };
 
   const getTagsForType = () => {
@@ -225,7 +249,15 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
       {step === 1 && (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-text">Where did you live?</h2>
-          <PropertySearch onSearch={handleAddressSearch} />
+          <p className="text-sm text-text-muted">
+            Search the same way as the homepage. You can review any valid U.S. rental address.
+          </p>
+          <AddressAutocomplete
+            onSelect={() => setSearchError('')}
+            onSubmit={handleAddressSubmit}
+            searching={searchingAddress}
+            error={searchError}
+          />
         </div>
       )}
 

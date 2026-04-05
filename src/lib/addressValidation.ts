@@ -98,6 +98,7 @@ export async function validateAddress(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      apikey: supabaseAnonKey,
       'Authorization': `Bearer ${supabaseAnonKey}`,
     },
     body: JSON.stringify(requestPayload),
