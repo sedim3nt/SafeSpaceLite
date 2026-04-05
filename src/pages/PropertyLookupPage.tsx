@@ -23,7 +23,6 @@ export function PropertyLookupPage() {
   const [rebuttals, setRebuttals] = useState<Rebuttal[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [validationInfo, setValidationInfo] = useState<AddressValidationResult | null>(null);
   const [jurisdictions, setJurisdictions] = useState<JurisdictionResolution | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('health');
   const [paymentStatus, setPaymentStatus] = useState<'success' | 'cancelled' | 'error' | null>(null);
@@ -132,7 +131,6 @@ export function PropertyLookupPage() {
 
   const handleSearch = async (result: AddressValidationResult) => {
     setSearchedAddress(result.normalized);
-    setValidationInfo(result);
     setJurisdictions(result.jurisdictions);
     setLoading(true);
     setSearched(true);
@@ -197,36 +195,6 @@ export function PropertyLookupPage() {
         </div>
       )}
 
-      {searched && !loading && validationInfo && (
-        <div className="rounded-lg bg-green-50 border border-green-200 p-3 flex items-start gap-2">
-          <span className="text-green-600 text-lg">✓</span>
-          <div>
-              <p className="text-sm font-medium text-green-800">
-              Verified address: {validationInfo.normalized}
-              </p>
-            {validationInfo.additionalInfo?.vacant === 'Y' && (
-              <p className="text-xs text-amber-700 mt-1">⚠ Validation metadata indicates this address may be vacant</p>
-            )}
-            {validationInfo.additionalInfo?.business === 'Y' && (
-              <p className="text-xs text-amber-700 mt-1">ℹ This is a commercial address</p>
-            )}
-            {validationInfo.corrections?.some(c => c.code === '32') && (
-              <p className="text-xs text-gray-600 mt-1">
-                Tip: Add an apartment or unit number for more specific results
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {jurisdictions && (
-        <JurisdictionLayers
-          layers={jurisdictions.layers}
-          title="What laws apply to this address?"
-          subtitle="SafeSpace layers city, county, state, and federal housing rules so the property record matches the jurisdiction stack behind it."
-        />
-      )}
-
       {searched && !loading && property && (
         <>
           {/* Tab bar */}
@@ -284,6 +252,14 @@ export function PropertyLookupPage() {
             This property has no reports yet. You can be the first to report an issue.
           </p>
         </div>
+      )}
+
+      {searched && jurisdictions && (
+        <JurisdictionLayers
+          layers={jurisdictions.layers}
+          title="What laws apply to this address?"
+          subtitle="SafeSpace layers city, county, state, and federal housing rules so the property record matches the jurisdiction stack behind it."
+        />
       )}
 
       {searched && (
