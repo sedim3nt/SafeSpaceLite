@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button, Card, Input, Textarea, Select } from '../components/common';
 import { ProtectedAction } from '../components/auth/ProtectedAction';
+import { AddressAutocomplete } from '../components/features/AddressAutocomplete';
 import { useAuth } from '../contexts/AuthContext';
 import { useFormBehavior } from '../hooks';
 import { supabase } from '../lib/supabase';
@@ -58,13 +59,20 @@ const evidenceTierOptions = [
 
 function EvidenceTierGuide() {
   return (
-    <Card className="border-blue-200 bg-blue-50 p-4">
-      <div className="space-y-1 text-sm text-blue-900">
-        <p className="font-semibold">How SafeSpace grades evidence</p>
-        <p>Level 1: narrative only.</p>
-        <p>Level 2: photos, screenshots, receipts, or documents.</p>
-        <p>Level 3: third-party tests or inspections.</p>
-        <p>Level 4: official agency notice, citation, or written finding.</p>
+    <Card className="h-full border-border bg-surface p-5">
+      <div className="space-y-3">
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold text-ink">How SafeSpace grades evidence</h3>
+          <p className="text-sm text-text-muted">
+            Choose the strongest support you have today so readers can judge certainty and urgency correctly.
+          </p>
+        </div>
+        <div className="space-y-2 text-sm text-text-muted">
+          <p><strong className="text-text">Level 1:</strong> narrative only.</p>
+          <p><strong className="text-text">Level 2:</strong> photos, screenshots, receipts, or documents.</p>
+          <p><strong className="text-text">Level 3:</strong> third-party tests or inspections.</p>
+          <p><strong className="text-text">Level 4:</strong> official agency notice, citation, or written finding.</p>
+        </div>
       </div>
     </Card>
   );
@@ -91,6 +99,8 @@ export function ReportPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [addressSearching, setAddressSearching] = useState(false);
+  const [addressError, setAddressError] = useState('');
 
   // Severity color-shift: set data attribute on body
   useEffect(() => {
@@ -115,6 +125,26 @@ export function ReportPage() {
 
   const removePhoto = (index: number) => {
     setPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddressLookup = async (address: string) => {
+    setAddressSearching(true);
+    setAddressError('');
+    setError('');
+
+    try {
+      const validationResult = await validateAddress(address);
+      if (!validationResult.valid) {
+        setAddressError('Address not found. Please enter a valid U.S. street address.');
+        return;
+      }
+
+      updateField('address', validationResult.normalized);
+    } catch (err) {
+      setAddressError(err instanceof Error ? err.message : 'Unable to validate this address right now.');
+    } finally {
+      setAddressSearching(false);
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -217,19 +247,27 @@ export function ReportPage() {
         </p>
       </div>
 
-      <Card className="bg-sage-50 border-sage-200">
-        <div className="space-y-1">
-          <p className="text-sm font-semibold text-sage-900">Before You Report</p>
-          <ul className="space-y-1 text-sm text-sage-800">
-            <li>• Take photos and gather documentation first.</li>
-            <li>• Notify your landlord in writing when possible.</li>
-            <li>• Use the <Link to="/legal-notice" className="underline underline-offset-2">Legal Notice Generator</Link> if you need a formal notice.</li>
-            <li>• Anonymous posting hides your name publicly, but your account is still used for moderation.</li>
-          </ul>
-        </div>
-      </Card>
-
-      <EvidenceTierGuide />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="h-full border-border bg-surface p-5">
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <h3 className="text-base font-semibold text-ink">Before You Report</h3>
+              <p className="text-sm text-text-muted">
+                Build the cleanest record you can before you publish. That makes the report more useful and easier to defend.
+              </p>
+            </div>
+            <div className="space-y-2 text-sm text-text-muted">
+              <p>Take photos and gather documentation first.</p>
+              <p>Notify your landlord in writing when possible.</p>
+              <p>
+                Use the <Link to="/legal-notice" className="underline underline-offset-2">Legal Notice Generator</Link> if you need a formal notice.
+              </p>
+              <p>Anonymous posting hides your name publicly, but your account is still used for moderation.</p>
+            </div>
+          </div>
+        </Card>
+        <EvidenceTierGuide />
+      </div>
 
       <ProtectedAction>
         <Card>
@@ -246,29 +284,41 @@ export function ReportPage() {
               />
             </div>
 
-            <Input
-              label="Property Address"
-              placeholder="123 Pearl St, Boulder, CO 80302"
-              value={form.address}
-              onChange={e => updateField('address', e.target.value)}
-              required
-            />
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-text">Property Address</label>
+              <AddressAutocomplete
+                initialValue={form.address}
+                onChangeQuery={(value) => updateField('address', value)}
+                onSelect={(address) => {
+                  updateField('address', address);
+                  setAddressError('');
+                }}
+                onSubmit={handleAddressLookup}
+                searching={addressSearching}
+                error={addressError}
+                submitLabel="Use This Address"
+                searchingLabel="Validating..."
+                placeholder="Start typing the property address..."
+              />
+            </div>
 
-            <Select
-              label="Issue Type"
-              options={issueTypes}
-              value={form.issueType}
-              onChange={e => updateField('issueType', e.target.value)}
-              required
-            />
+            <div className="grid gap-6 md:grid-cols-2">
+              <Select
+                label="Issue Type"
+                options={issueTypes}
+                value={form.issueType}
+                onChange={e => updateField('issueType', e.target.value)}
+                required
+              />
 
-            <Select
-              label="Severity"
-              options={severityOptions}
-              value={form.severity}
-              onChange={e => updateField('severity', e.target.value)}
-              required
-            />
+              <Select
+                label="Severity"
+                options={severityOptions}
+                value={form.severity}
+                onChange={e => updateField('severity', e.target.value)}
+                required
+              />
+            </div>
 
             {form.severity && (
               <div className={`rounded-md p-3 text-sm transition-colors duration-500 ${
@@ -294,29 +344,33 @@ export function ReportPage() {
             />
             <p className="text-xs text-text-muted">{form.description.length}/5000 characters</p>
 
-            <Select
-              label="Evidence Level"
-              options={evidenceTierOptions}
-              value={form.evidenceTier}
-              onChange={e => updateField('evidenceTier', e.target.value)}
-              required
-            />
+            <div className="grid gap-6 md:grid-cols-2">
+              <Select
+                label="Evidence Level"
+                options={evidenceTierOptions}
+                value={form.evidenceTier}
+                onChange={e => updateField('evidenceTier', e.target.value)}
+                required
+              />
 
-            <Textarea
-              label="Evidence Notes (optional)"
-              placeholder="Example: photos uploaded, mold lab kit pending, city inspector visited on March 1."
-              value={form.evidenceDetails}
-              onChange={e => updateField('evidenceDetails', e.target.value)}
-              maxLength={500}
-            />
-            <p className="text-xs text-text-muted">{form.evidenceDetails.length}/500 characters</p>
+              <Input
+                label="When did this issue start?"
+                type="date"
+                value={form.dateOccurred}
+                onChange={e => updateField('dateOccurred', e.target.value)}
+              />
+            </div>
 
-            <Input
-              label="When did this issue start?"
-              type="date"
-              value={form.dateOccurred}
-              onChange={e => updateField('dateOccurred', e.target.value)}
-            />
+            <div className="space-y-1.5">
+              <Textarea
+                label="Evidence Notes (optional)"
+                placeholder="Summarize what backs up this report: photos taken today, repair request emails, inspector visit, test results pending, or neighbors who witnessed the issue."
+                value={form.evidenceDetails}
+                onChange={e => updateField('evidenceDetails', e.target.value)}
+                maxLength={500}
+              />
+              <p className="text-xs text-text-muted">{form.evidenceDetails.length}/500 characters</p>
+            </div>
 
             <div className="space-y-3 rounded-md border border-border p-4">
               <label className="flex items-center gap-2">

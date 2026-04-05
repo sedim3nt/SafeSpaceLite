@@ -64,11 +64,13 @@ interface GooglePlacesService {
 interface AddressAutocompleteProps {
   onSelect: (address: string) => void;
   onSubmit: (address: string) => void;
+  onChangeQuery?: (address: string) => void;
   searching?: boolean;
   error?: string;
   submitLabel?: string;
   searchingLabel?: string;
   placeholder?: string;
+  initialValue?: string;
 }
 
 const GOOGLE_PLACES_KEY = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
@@ -105,13 +107,15 @@ function loadGoogleMaps(): Promise<void> {
 export function AddressAutocomplete({
   onSelect,
   onSubmit,
+  onChangeQuery,
   searching,
   error,
   submitLabel = 'Check Rights',
   searchingLabel = 'Searching...',
   placeholder = 'Start typing your address...',
+  initialValue = '',
 }: AddressAutocompleteProps) {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialValue);
   const [predictions, setPredictions] = useState<GooglePrediction[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState('');
@@ -141,6 +145,11 @@ export function AddressAutocomplete({
       setAutocompleteMessage(`Live address suggestions are unavailable right now. You can still type your full address and press ${submitLabel}.`);
     });
   }, [submitLabel]);
+
+  useEffect(() => {
+    setQuery(initialValue);
+    setSelectedAddress(initialValue);
+  }, [initialValue]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -181,6 +190,7 @@ export function AddressAutocomplete({
   const handleInput = (value: string) => {
     setQuery(value);
     setSelectedAddress('');
+    onChangeQuery?.(value);
     if (!value.trim()) {
       setAutocompleteMessage('');
     }
@@ -194,6 +204,7 @@ export function AddressAutocomplete({
     setQuery(addr);
     setSelectedAddress(addr);
     setShowDropdown(false);
+    onChangeQuery?.(addr);
     onSelect(addr);
   };
 
