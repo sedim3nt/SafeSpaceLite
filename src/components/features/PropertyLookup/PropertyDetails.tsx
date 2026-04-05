@@ -71,12 +71,7 @@ export function PropertyDetails({
         </div>
       </div>
 
-      {reports.length === 0 ? (
-        <Card className="py-8 text-center">
-          <p className="text-text-muted">No reports filed for this property yet.</p>
-          <p className="mt-1 text-sm text-text-muted">Be the first to report an issue.</p>
-        </Card>
-      ) : (
+      {reports.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-3xl font-bold tracking-tight text-ink">Reports Timeline</h3>
           {reports.map((report) => {
