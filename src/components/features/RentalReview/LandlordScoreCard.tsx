@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Card, Button } from '../../common';
+import { useEffect, useState } from 'react';
+import { Card } from '../../common';
 import { supabase } from '../../../lib/supabase';
 import type {
   Landlord,
@@ -8,7 +7,6 @@ import type {
   LandlordScore,
   ReviewResponse,
 } from '../../../types/database';
-import { LandlordResponseForm } from '../LandlordResponses/LandlordResponseForm';
 
 const RELATIONSHIP_BADGES: Record<string, { icon: string; label: string }> = {
   property_owner: { icon: '🏠', label: 'Landlord' },
@@ -52,7 +50,6 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0, onLoadingChang
   const [scores, setScores] = useState<LandlordScore[]>([]);
   const [reviewResponses, setReviewResponses] = useState<ReviewResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [openResponseFor, setOpenResponseFor] = useState<string | null>(null);
 
   useEffect(() => {
     onLoadingChange?.(loading);
@@ -95,10 +92,7 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0, onLoadingChang
     return (
       <div className="text-center py-8">
         <p className="text-text-muted">No rental reviews yet for this property.</p>
-        <p className="text-sm text-text-muted mt-1">Be the first to share your experience.</p>
-        <Link to="/review">
-          <Button size="sm" className="mt-4">Write a Review</Button>
-        </Link>
+        <p className="mt-1 text-sm text-text-muted">Check back here as tenant reviews are added.</p>
       </div>
     );
   }
@@ -248,44 +242,10 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0, onLoadingChang
                   </div>
                   <p className="text-sm text-teal-900">{reviewResponse.body}</p>
                 </div>
-              ) : (
-                <div className="space-y-3 border-t border-border pt-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium text-text">Own or manage this property?</p>
-                      <p className="text-sm text-text-muted">
-                        Add one paid public response to this rental review.
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant={openResponseFor === review.id ? 'ghost' : 'primary'}
-                      onClick={() => setOpenResponseFor((current) => current === review.id ? null : review.id)}
-                    >
-                      {openResponseFor === review.id ? 'Close' : 'Respond'}
-                    </Button>
-                  </div>
-
-                  {openResponseFor === review.id && (
-                    <LandlordResponseForm
-                      responseType="review"
-                      targetId={review.id}
-                      propertyId={propertyId}
-                      landlordId={review.landlord_id}
-                    />
-                  )}
-                </div>
-              )}
+              ) : null}
             </Card>
           );
         })}
-      </div>
-
-      {/* CTA */}
-      <div className="pt-2 text-left">
-        <Link to="/review">
-          <Button variant="primary" size="sm">Write a Review</Button>
-        </Link>
       </div>
     </div>
   );

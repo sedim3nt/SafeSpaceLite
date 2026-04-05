@@ -1,8 +1,6 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Card } from '../../common';
 import type { Report, Rebuttal } from '../../../types/database';
-import { LandlordResponseForm } from '../LandlordResponses/LandlordResponseForm';
 
 interface PropertyDetailsProps {
   propertyId: string;
@@ -31,12 +29,10 @@ const EVIDENCE_TIERS: Record<string, { label: string; style: string }> = {
 };
 
 export function PropertyDetails({
-  propertyId,
   address,
   reports,
   rebuttals,
 }: PropertyDetailsProps) {
-  const [openResponseFor, setOpenResponseFor] = useState<string | null>(null);
   const issueLabels: Record<string, string> = {
     mold: 'Mold',
     radon: 'Radon',
@@ -166,34 +162,6 @@ export function PropertyDetails({
                         </time>
                       </div>
                       <p className="text-sm text-teal-900">{rebuttal.body}</p>
-                    </div>
-                  )}
-
-                  {!rebuttal && (
-                    <div className="space-y-3 border-t border-border pt-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-medium text-text">Own or manage this property?</p>
-                          <p className="text-sm text-text-muted">
-                            Add one paid public response to this safety report.
-                          </p>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant={openResponseFor === report.id ? 'ghost' : 'secondary'}
-                          onClick={() => setOpenResponseFor((current) => current === report.id ? null : report.id)}
-                        >
-                          {openResponseFor === report.id ? 'Close' : 'Respond'}
-                        </Button>
-                      </div>
-
-                      {openResponseFor === report.id && (
-                        <LandlordResponseForm
-                          responseType="report"
-                          targetId={report.id}
-                          propertyId={propertyId}
-                        />
-                      )}
                     </div>
                   )}
                 </div>

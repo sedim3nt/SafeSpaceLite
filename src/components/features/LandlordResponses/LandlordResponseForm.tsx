@@ -34,6 +34,12 @@ const RESPONSE_COPY: Record<
       'Landlords and managers can add a paid public response to a rental review. Use this to acknowledge the issue, clarify facts, or explain what changed.',
     placeholder: 'Share your response to this review, including any repairs, policy changes, or factual corrections.',
   },
+  property: {
+    title: 'Publish a Landlord Note ($10)',
+    intro:
+      'Use one verified landlord note to address false claims, explain fixes already completed, or highlight positive improvements on the property page.',
+    placeholder: 'Explain what is true about this property, what work has been completed, or what prospective renters should know.',
+  },
 };
 
 export function LandlordResponseForm({

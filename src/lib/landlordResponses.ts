@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-export type LandlordResponseType = 'report' | 'review';
+export type LandlordResponseType = 'report' | 'review' | 'property';
 
 export interface PendingLandlordResponse {
   responseType: LandlordResponseType;

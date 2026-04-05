@@ -4,11 +4,12 @@ import { PropertySearch } from '../components/features/PropertyLookup/PropertySe
 import { PropertyDetails } from '../components/features/PropertyLookup/PropertyDetails';
 import { LandlordScoreCard } from '../components/features/RentalReview/LandlordScoreCard';
 import { JurisdictionLayers } from '../components/features/Jurisdictions/JurisdictionLayers';
+import { PersistentLandlordPanel } from '../components/features/LandlordResponses/PersistentLandlordPanel';
 import { supabase } from '../lib/supabase';
 import { ensureProperty, type AddressValidationResult } from '../lib/addressValidation';
 import { finalizePendingLandlordResponse } from '../lib/landlordResponses';
 import { resolveJurisdictionLayers, type JurisdictionResolution } from '../data/jurisdictions';
-import type { Report, Rebuttal, Property } from '../types/database';
+import type { PropertyLandlordStatement, Report, Rebuttal, Property } from '../types/database';
 
 type Tab = 'health' | 'rental';
 
@@ -19,6 +20,8 @@ export function PropertyLookupPage() {
   const [property, setProperty] = useState<Property | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
   const [rebuttals, setRebuttals] = useState<Rebuttal[]>([]);
+  const [landlordStatement, setLandlordStatement] = useState<PropertyLandlordStatement | null>(null);
+  const [rentalReviewCount, setRentalReviewCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [jurisdictions, setJurisdictions] = useState<JurisdictionResolution | null>(null);
@@ -41,6 +44,8 @@ export function PropertyLookupPage() {
       setProperty(null);
       setReports([]);
       setRebuttals([]);
+      setLandlordStatement(null);
+      setRentalReviewCount(0);
       return;
     }
 
@@ -55,13 +60,17 @@ export function PropertyLookupPage() {
       }),
     );
 
-    const [reportsRes, rebuttalsRes] = await Promise.all([
+    const [reportsRes, rebuttalsRes, statementRes, rentalReviewCountRes] = await Promise.all([
       supabase.from('reports').select('*').eq('property_id', prop.id).order('created_at', { ascending: false }),
       supabase.from('rebuttals').select('*').eq('property_id', prop.id),
+      supabase.from('property_landlord_statements').select('*').eq('property_id', prop.id).maybeSingle(),
+      supabase.from('rental_reviews').select('id', { count: 'exact', head: true }).eq('property_id', prop.id),
     ]);
 
     setReports(reportsRes.data || []);
     setRebuttals(rebuttalsRes.data || []);
+    setLandlordStatement(statementRes.data || null);
+    setRentalReviewCount(rentalReviewCountRes.count || 0);
   }, []);
 
   useEffect(() => {
@@ -99,6 +108,8 @@ export function PropertyLookupPage() {
         setPaymentMessage(
           responseType === 'review'
             ? 'Payment received. The landlord response was added to this rental review.'
+            : responseType === 'property'
+              ? 'Payment received. The landlord note was added to this property page.'
             : 'Payment received. The landlord response was added to this safety report.',
         );
         await fetchPropertyData(resolvedPropertyId);
@@ -226,6 +237,15 @@ export function PropertyLookupPage() {
               onLoadingChange={setRentalTabLoading}
             />
           )}
+
+          <div className="pt-2">
+            <PersistentLandlordPanel
+              propertyId={property.id}
+              statement={landlordStatement}
+              hasReports={reports.length > 0}
+              hasReviews={rentalReviewCount > 0}
+            />
+          </div>
         </>
       )}
 

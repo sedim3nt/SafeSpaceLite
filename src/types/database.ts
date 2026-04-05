@@ -201,6 +201,32 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['review_responses']['Insert']>;
         Relationships: [];
       };
+      property_landlord_statements: {
+        Row: {
+          id: string;
+          property_id: string;
+          landlord_user_id: string;
+          landlord_email: string;
+          is_verified: boolean;
+          body: string;
+          stripe_payment_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          property_id: string;
+          landlord_user_id: string;
+          landlord_email: string;
+          is_verified?: boolean;
+          body: string;
+          stripe_payment_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['property_landlord_statements']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: {
       landlord_scores: {
@@ -231,4 +257,5 @@ export type Rebuttal = Database['public']['Tables']['rebuttals']['Row'];
 export type Landlord = Database['public']['Tables']['landlords']['Row'];
 export type RentalReview = Database['public']['Tables']['rental_reviews']['Row'];
 export type ReviewResponse = Database['public']['Tables']['review_responses']['Row'];
+export type PropertyLandlordStatement = Database['public']['Tables']['property_landlord_statements']['Row'];
 export type LandlordScore = Database['public']['Views']['landlord_scores']['Row'];

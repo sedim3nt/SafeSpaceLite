@@ -10,7 +10,7 @@ const CORS_HEADERS = {
 const STRIPE_API_BASE = "https://api.stripe.com/v1";
 const DEFAULT_PRICE_ID = "price_1TGvYr3mPzsVWwtASfSMXL5K";
 
-type ResponseType = "report" | "review";
+type ResponseType = "report" | "review" | "property";
 
 interface CreateCheckoutPayload {
   action: "create-checkout";
@@ -188,6 +188,28 @@ async function finalizePaidResponse(payload: FinalizePayload, actor: Authenticat
 
     if (error) throw error;
     return { id: data.id, table: "rebuttals" };
+  }
+
+  if (payload.responseType === "property") {
+    const { data, error } = await admin
+      .from("property_landlord_statements")
+      .upsert(
+        {
+          property_id: payload.propertyId,
+          landlord_user_id: actor.id,
+          landlord_email: expectedEmail || payload.landlordEmail,
+          is_verified: true,
+          body: payload.body.trim(),
+          stripe_payment_id: stripePaymentId,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "property_id" },
+      )
+      .select("id")
+      .single();
+
+    if (error) throw error;
+    return { id: data.id, table: "property_landlord_statements" };
   }
 
   if (!payload.landlordId) {
