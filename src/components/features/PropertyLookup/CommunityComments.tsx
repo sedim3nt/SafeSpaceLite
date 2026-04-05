@@ -49,9 +49,9 @@ export function CommunityComments({ propertyId, comments, onCommentAdded }: Comm
     onCommentAdded();
   };
 
-  return (
+    return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-text">Community Comments</h3>
+      <h3 className="text-3xl font-bold tracking-tight text-ink">Community Comments</h3>
 
       {comments.length === 0 ? (
         <p className="text-text-muted">No comments yet. Be the first to share your experience.</p>

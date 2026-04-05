@@ -113,6 +113,13 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0 }: LandlordScor
 
   return (
     <div className="space-y-6">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight text-ink">Landlord Reviews</h2>
+        <p className="text-sm text-text-muted">
+          Review patterns, landlord responses, and renter-reported experience for this property.
+        </p>
+      </div>
+
       {/* Per-landlord score cards */}
       {scores.map((score) => {
         const landlord = landlords.find((l) => l.id === score.landlord_id);
@@ -167,7 +174,7 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0 }: LandlordScor
       {/* Tag frequency */}
       {sortedTags.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-text mb-2">Common themes</h4>
+          <h3 className="mb-3 text-3xl font-bold tracking-tight text-ink">Common Themes</h3>
           <div className="flex flex-wrap gap-2">
             {sortedTags.slice(0, 10).map(([tag, count]) => (
               <span
@@ -184,7 +191,7 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0 }: LandlordScor
 
       {/* Recent reviews */}
       <div className="space-y-3">
-        <h4 className="text-sm font-semibold text-text">Recent reviews</h4>
+        <h3 className="text-3xl font-bold tracking-tight text-ink">Recent Reviews</h3>
         {reviews.map((review) => {
           const badge = RELATIONSHIP_BADGES[review.relationship_type] || { icon: '', label: '' };
           const avg = (
