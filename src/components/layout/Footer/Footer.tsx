@@ -63,11 +63,16 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-text">About SafeSpace</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-text">Improve SafeSpace</h3>
             <p className="mt-4 text-sm leading-relaxed text-text-muted">
-              SafeSpace helps renters understand the laws that apply to their address, document safety issues,
-              and review landlord behavior with stronger privacy and accountability controls.
+              Found a bug, confusing UI, or something we should improve? Send feedback so we can make SafeSpace clearer, faster, and more useful.
             </p>
+            <a
+              href="mailto:terraloam.eye@gmail.com?subject=SafeSpace%20Feedback"
+              className="mt-4 inline-flex items-center justify-center rounded-md bg-sage-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sage-700"
+            >
+              Provide Feedback
+            </a>
           </div>
         </div>
 
