@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Navigation } from '../Navigation/Navigation';
 import { useAuth } from '../../../contexts/AuthContext';
 import { AuthModal } from '../../auth/AuthModal';
+import { Button } from '../../common/Button/Button';
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -25,7 +26,11 @@ export function Header() {
             <div className="hidden md:block">
               {user ? (
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-text-muted">{user.email}</span>
+                  <Link to="/property-owners">
+                    <Button variant="secondary" size="sm" className="bg-white text-text hover:bg-surface-muted">
+                      For Property Owners
+                    </Button>
+                  </Link>
                   <button
                     onClick={() => signOut()}
                     className="rounded-md px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-muted hover:text-text"
@@ -67,9 +72,17 @@ export function Header() {
             <div className="space-y-1 px-4 pt-3 pb-4">
               <Navigation mobile onNavigate={() => setIsMobileMenuOpen(false)} />
               <div className="mt-4 border-t border-border pt-4">
+                <Link
+                  to="/property-owners"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="mb-3 block"
+                >
+                  <Button variant="secondary" className="w-full bg-white text-text hover:bg-surface-muted">
+                    For Property Owners
+                  </Button>
+                </Link>
                 {user ? (
                   <div className="space-y-2">
-                    <p className="px-3 text-sm text-text-muted">{user.email}</p>
                     <button
                       onClick={() => { signOut(); setIsMobileMenuOpen(false); }}
                       className="block w-full rounded-md px-3 py-2 text-left text-base font-medium text-text-muted hover:bg-surface-muted"

@@ -1,6 +1,7 @@
 export { HomePage } from './HomePage';
 export { EmergencyGuidePage } from './EmergencyGuidePage';
 export { PropertyLookupPage } from './PropertyLookupPage';
+export { PropertyOwnersPage } from './PropertyOwnersPage';
 export { ReportPage } from './ReportPage';
 export { TrackerPage } from './TrackerPage';
 export { KnowYourRightsPage } from './KnowYourRightsPage';

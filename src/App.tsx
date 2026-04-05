@@ -4,6 +4,7 @@ import {
   HomePage,
   EmergencyGuidePage,
   PropertyLookupPage,
+  PropertyOwnersPage,
   ReportPage,
   TrackerPage,
   KnowYourRightsPage,
@@ -27,6 +28,7 @@ function App() {
           <Route path="/emergency-guide" element={<EmergencyGuidePage />} />
           <Route path="/property-lookup" element={<PropertyLookupPage />} />
           <Route path="/property/:propertyId" element={<PropertyLookupPage />} />
+          <Route path="/property-owners" element={<PropertyOwnersPage />} />
           <Route path="/report" element={<ReportPage />} />
           <Route path="/tracker" element={<TrackerPage />} />
           <Route path="/know-your-rights" element={<KnowYourRightsPage />} />
