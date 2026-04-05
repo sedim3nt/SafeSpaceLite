@@ -36,12 +36,8 @@ function getLetterGrade(score: number): { grade: string; color: string } {
   return { grade: 'F', color: 'text-red-700 bg-red-100' };
 }
 
-function getBarColor(score: number): string {
-  if (score >= 4.5) return 'bg-green-500';
-  if (score >= 3.5) return 'bg-lime-500';
-  if (score >= 2.5) return 'bg-yellow-500';
-  if (score >= 1.5) return 'bg-orange-500';
-  return 'bg-red-500';
+function getBarColor(): string {
+  return 'bg-sage-600';
 }
 
 interface LandlordScoreCardProps {
@@ -155,14 +151,14 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0 }: LandlordScor
                 const val = score[key as keyof LandlordScore] as number;
                 return (
                   <div key={key} className="flex items-center gap-3">
-                    <span className="text-xs text-text-muted w-28 shrink-0">{label}</span>
-                    <div className="flex-1 h-2 bg-sage-100 rounded-full overflow-hidden">
+                    <span className="w-32 shrink-0 text-sm text-text">{label}</span>
+                    <div className="h-4 flex-1 overflow-hidden rounded-full bg-sage-100">
                       <div
-                        className={`h-full rounded-full transition-all duration-500 ${getBarColor(val)}`}
+                        className={`h-full rounded-full transition-all duration-500 ${getBarColor()}`}
                         style={{ width: `${(val / 5) * 100}%` }}
                       />
                     </div>
-                    <span className="text-xs font-medium text-text w-6 text-right">{val}</span>
+                    <span className="w-8 text-right text-sm font-medium text-text">{val}</span>
                   </div>
                 );
               })}
@@ -174,7 +170,7 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0 }: LandlordScor
       {/* Tag frequency */}
       {sortedTags.length > 0 && (
         <div>
-          <h3 className="mb-3 text-3xl font-bold tracking-tight text-ink">Common Themes</h3>
+          <h3 className="mb-3 text-xl font-semibold text-text">Common Themes</h3>
           <div className="flex flex-wrap gap-2">
             {sortedTags.slice(0, 10).map(([tag, count]) => (
               <span
@@ -191,7 +187,7 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0 }: LandlordScor
 
       {/* Recent reviews */}
       <div className="space-y-3">
-        <h3 className="text-3xl font-bold tracking-tight text-ink">Recent Reviews</h3>
+        <h3 className="text-xl font-semibold text-text">Recent Reviews</h3>
         {reviews.map((review) => {
           const badge = RELATIONSHIP_BADGES[review.relationship_type] || { icon: '', label: '' };
           const avg = (
