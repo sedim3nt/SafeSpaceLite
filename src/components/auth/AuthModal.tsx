@@ -46,7 +46,13 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const handleGoogle = async () => {
     setError('');
     const { error } = await signInWithGoogle();
-    if (error) setError(error.message);
+    if (error) {
+      if (error.message.includes('Unsupported provider')) {
+        setError('Google sign-in is not configured yet. Use email sign-in for now.');
+        return;
+      }
+      setError(error.message);
+    }
   };
 
   if (confirmationSent) {
