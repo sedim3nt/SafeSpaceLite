@@ -259,7 +259,7 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0, onLoadingChang
                     </div>
                     <Button
                       size="sm"
-                      variant={openResponseFor === review.id ? 'ghost' : 'secondary'}
+                      variant={openResponseFor === review.id ? 'ghost' : 'primary'}
                       onClick={() => setOpenResponseFor((current) => current === review.id ? null : review.id)}
                     >
                       {openResponseFor === review.id ? 'Close' : 'Respond'}
@@ -282,9 +282,9 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0, onLoadingChang
       </div>
 
       {/* CTA */}
-      <div className="text-center pt-2">
+      <div className="pt-2 text-left">
         <Link to="/review">
-          <Button variant="secondary" size="sm">Write a Review</Button>
+          <Button variant="primary" size="sm">Write a Review</Button>
         </Link>
       </div>
     </div>
