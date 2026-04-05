@@ -180,10 +180,10 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0, onLoadingChang
             {sortedTags.slice(0, 10).map(([tag, count]) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sage-100 text-sage-700 text-xs font-medium"
+                className="inline-flex items-center gap-1.5 rounded-full bg-sage-100 px-3.5 py-1.5 text-sm font-medium text-sage-700"
               >
                 {tag}
-                <span className="bg-sage-200 text-sage-800 rounded-full px-1.5 text-xs">{count}</span>
+                <span className="rounded-full bg-sage-200 px-2 py-0.5 text-sm text-sage-800">{count}</span>
               </span>
             ))}
           </div>
@@ -213,7 +213,7 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0, onLoadingChang
               {review.tags && review.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {review.tags.map((tag) => (
-                    <span key={tag} className="px-2 py-0.5 rounded-full bg-sage-50 text-sage-600 text-xs">
+                    <span key={tag} className="rounded-full bg-sage-50 px-3 py-1 text-sm text-sage-600">
                       {tag}
                     </span>
                   ))}
