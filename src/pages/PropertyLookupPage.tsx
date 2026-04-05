@@ -255,11 +255,13 @@ export function PropertyLookupPage() {
       )}
 
       {searched && !loading && jurisdictions && (
-        <JurisdictionLayers
-          layers={jurisdictions.layers}
-          title="What laws apply to this address?"
-          subtitle="SafeSpace layers city, county, state, and federal housing rules so the property record matches the jurisdiction stack behind it."
-        />
+        <div className="border-t border-border pt-10">
+          <JurisdictionLayers
+            layers={jurisdictions.layers}
+            title="What laws apply to this address?"
+            subtitle="SafeSpace layers city, county, state, and federal housing rules so the property record matches the jurisdiction stack behind it."
+          />
+        </div>
       )}
 
       {searched && (
