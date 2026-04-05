@@ -15,7 +15,10 @@ function ScoreBadge({ score }: { score: number }) {
 export function CitiesPage() {
   const allCities = getAllResearchCities();
   const deepCities = getDeepCities();
-  const statesWithCities = getStatesWithCities();
+  const statesWithCities = useMemo(
+    () => [...getStatesWithCities()].sort((a, b) => (a.name || a.code).localeCompare(b.name || b.code)),
+    [],
+  );
 
   const [search, setSearch] = useState('');
   const [stateFilter, setStateFilter] = useState('');
@@ -51,46 +54,46 @@ export function CitiesPage() {
 
   return (
     <div className="space-y-10">
-      <section className="text-center pt-4">
-        <h1 className="text-4xl font-bold tracking-tight text-ink sm:text-5xl">
-          {allCities.length}+ Cities
-        </h1>
-        <p className="mt-3 text-lg text-text-muted">
-          Tenant rights data across {statesWithCities.length} states. Search by city or filter by state.
+      <div>
+        <h1 className="text-3xl font-bold text-ink">City Search</h1>
+        <p className="mt-2 text-lg text-text-muted">
+          Explore researched cities, compare tenant-protection strength, and open each city&apos;s rights profile.
         </p>
-      </section>
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto">
-        <Input
-          placeholder="Search cities..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <select
-          value={stateFilter}
-          onChange={(e) => setStateFilter(e.target.value)}
-          className="h-12 rounded-md border border-border bg-rice px-4 text-sm text-text"
-        >
-          <option value="">All States</option>
-          {statesWithCities.map(s => (
-            <option key={s.code} value={s.code}>{s.name || s.code} ({s.count})</option>
-          ))}
-        </select>
-        <select
-          value={scoreFilter}
-          onChange={(e) => setScoreFilter(e.target.value)}
-          className="h-12 rounded-md border border-border bg-rice px-4 text-sm text-text"
-        >
-          <option value="">All Scores</option>
-          <option value="strong">Strong (7-10)</option>
-          <option value="moderate">Moderate (4-6)</option>
-          <option value="weak">Weak (1-3)</option>
-        </select>
       </div>
 
-      <p className="text-center text-sm text-text-muted">
-        Showing {filtered.length} of {allCities.length} cities
+      {/* Filters */}
+      <div className="max-w-2xl">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Input
+            placeholder="Search cities..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <select
+            value={stateFilter}
+            onChange={(e) => setStateFilter(e.target.value)}
+            className="h-12 rounded-md border border-border bg-rice px-4 text-left text-sm text-text"
+          >
+            <option value="">All States & Territories</option>
+            {statesWithCities.map(s => (
+              <option key={s.code} value={s.code}>{s.name || s.code} ({s.count})</option>
+            ))}
+          </select>
+          <select
+            value={scoreFilter}
+            onChange={(e) => setScoreFilter(e.target.value)}
+            className="h-12 rounded-md border border-border bg-rice px-4 text-left text-sm text-text"
+          >
+            <option value="">All Scores</option>
+            <option value="strong">Strong (7-10)</option>
+            <option value="moderate">Moderate (4-6)</option>
+            <option value="weak">Weak (1-3)</option>
+          </select>
+        </div>
+      </div>
+
+      <p className="text-sm text-text-muted">
+        {allCities.length} researched cities across the United States. Showing {filtered.length} results.
       </p>
 
       {/* City List by State */}
