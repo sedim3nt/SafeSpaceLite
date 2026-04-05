@@ -7,9 +7,9 @@ export function PropertyOwnersPage() {
       <div className="max-w-3xl space-y-3">
         <h1 className="text-3xl font-bold text-text">For Landlords</h1>
         <p className="text-lg text-text-muted">
-          Use Property Lookup to see tenant health and safety reports and landlord reviews for an address. From that same
-          property page, you can publish a verified landlord note to dispute false claims, explain what was fixed, or say
-          something positive about the property before anyone else does.
+          Use Property Lookup to view health and safety reports and landlord reviews for any address. From that same page,
+          you can publish a verified landlord note to correct the record, explain what was fixed, or introduce the property
+          in your own words before anyone else does.
         </p>
       </div>
 
@@ -18,15 +18,15 @@ export function PropertyOwnersPage() {
           <h2 className="text-xl font-semibold text-text">What landlords can do</h2>
           <div className="mt-5 space-y-4">
             <div className="rounded-xl border border-border bg-surface p-4">
-              <h3 className="text-xl font-semibold text-text">Check the property page first</h3>
+              <h3 className="text-xl font-semibold text-text">See what renters see</h3>
               <p className="mt-2 text-base text-text-muted">
-                Review the same reports and reviews renters see before you decide how to respond.
+                View the same reports and reviews renters see before you decide how to respond.
               </p>
             </div>
             <div className="rounded-xl border border-border bg-surface p-4">
               <h3 className="text-xl font-semibold text-text">Publish one verified landlord note</h3>
               <p className="mt-2 text-base text-text-muted">
-                Use it to say a report is false, explain what was fixed, or highlight upgrades and strengths.
+                Use it to dispute a false claim, explain work that has already been completed, or highlight upgrades and strengths.
               </p>
             </div>
             <div className="rounded-xl border border-border bg-surface p-4">
@@ -41,12 +41,12 @@ export function PropertyOwnersPage() {
         <div className="rounded-2xl border border-border bg-sage-50/60 p-8">
           <h2 className="text-xl font-semibold text-text">$10 landlord note</h2>
           <p className="mt-3 text-base text-text-muted">
-            The landlord note is persistent on the property result page. It stays available whether the address already
-            has reports and reviews or nothing has been posted yet.
+            The landlord note always appears on the property page. Landlords can use it whether the address already has
+            reports or reviews, or nothing has been posted yet.
           </p>
           <p className="mt-3 text-base text-text-muted">
-            That gives landlords two options: respond to criticism with facts, or take initiative and be the first to say
-            something positive about the property.
+            That gives you two clear options: answer criticism with facts, or take the initiative and say something
+            positive about the property before a dispute defines it.
           </p>
 
           <div className="mt-6 flex flex-col gap-4 sm:flex-row">
