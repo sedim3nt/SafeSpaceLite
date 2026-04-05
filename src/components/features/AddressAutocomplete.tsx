@@ -47,6 +47,20 @@ interface GooglePlaceDetail {
   formatted_address: string;
 }
 
+interface GoogleAutocompleteService {
+  getPlacePredictions: (
+    request: { input: string; componentRestrictions: { country: string }; types: string[] },
+    callback: (predictions: GooglePrediction[] | null, status: string) => void
+  ) => void;
+}
+
+interface GooglePlacesService {
+  getDetails: (
+    request: { placeId: string; fields: string[] },
+    callback: (result: GooglePlaceDetail | null, status: string) => void
+  ) => void;
+}
+
 interface AddressAutocompleteProps {
   onSelect: (address: string) => void;
   onSubmit: (address: string) => void;
@@ -90,8 +104,8 @@ export function AddressAutocomplete({ onSelect, onSubmit, searching, error }: Ad
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const dummyRef = useRef<HTMLDivElement>(null);
-  const autocompleteService = useRef<InstanceType<typeof window.google.maps.places.AutocompleteService> | null>(null);
-  const placesService = useRef<InstanceType<typeof window.google.maps.places.PlacesService> | null>(null);
+  const autocompleteService = useRef<GoogleAutocompleteService | null>(null);
+  const placesService = useRef<GooglePlacesService | null>(null);
 
   // Load Google Maps SDK once
   useEffect(() => {

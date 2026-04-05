@@ -1,14 +1,44 @@
-import { Card } from '../../common';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Button, Card } from '../../common';
 import type { Report, Comment as DbComment, Rebuttal } from '../../../types/database';
+import { LandlordResponseForm } from '../LandlordResponses/LandlordResponseForm';
 
 interface PropertyDetailsProps {
+  propertyId: string;
   address: string;
   reports: Report[];
   comments: DbComment[];
   rebuttals: Rebuttal[];
 }
 
-export function PropertyDetails({ address, reports, comments, rebuttals }: PropertyDetailsProps) {
+const EVIDENCE_TIERS: Record<string, { label: string; style: string }> = {
+  narrative_only: {
+    label: 'Level 1: Narrative',
+    style: 'bg-slate-100 text-slate-700',
+  },
+  photo_documentation: {
+    label: 'Level 2: Photo / Document',
+    style: 'bg-sky-100 text-sky-700',
+  },
+  third_party_test: {
+    label: 'Level 3: Third-Party Test',
+    style: 'bg-violet-100 text-violet-700',
+  },
+  official_finding: {
+    label: 'Level 4: Official Finding',
+    style: 'bg-emerald-100 text-emerald-700',
+  },
+};
+
+export function PropertyDetails({
+  propertyId,
+  address,
+  reports,
+  comments,
+  rebuttals,
+}: PropertyDetailsProps) {
+  const [openResponseFor, setOpenResponseFor] = useState<string | null>(null);
   const issueLabels: Record<string, string> = {
     mold: 'Mold',
     radon: 'Radon',
@@ -38,6 +68,14 @@ export function PropertyDetails({ address, reports, comments, rebuttals }: Prope
           <span>{reports.length} report{reports.length !== 1 ? 's' : ''}</span>
           <span>{comments.length} comment{comments.length !== 1 ? 's' : ''}</span>
         </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link to={`/report?address=${encodeURIComponent(address)}`}>
+            <Button size="sm">Report an Issue</Button>
+          </Link>
+          <Link to={`/tracker?address=${encodeURIComponent(address)}`}>
+            <Button size="sm" variant="secondary">Track Response</Button>
+          </Link>
+        </div>
       </div>
 
       {reports.length === 0 ? (
@@ -51,17 +89,21 @@ export function PropertyDetails({ address, reports, comments, rebuttals }: Prope
           {reports.map((report) => {
             const rebuttal = getRebuttalForReport(report.id);
             const severity = severityConfig[report.severity] || severityConfig.standard;
+            const evidenceTier = EVIDENCE_TIERS[report.evidence_tier] || EVIDENCE_TIERS.narrative_only;
 
             return (
               <Card key={report.id}>
                 <div className="space-y-3">
                   <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium text-text">
                         {issueLabels[report.issue_type] || report.issue_type}
                       </span>
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${severity.className}`}>
                         {severity.label}
+                      </span>
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${evidenceTier.style}`}>
+                        {evidenceTier.label}
                       </span>
                     </div>
                     <time className="text-sm text-text-muted">
@@ -70,6 +112,28 @@ export function PropertyDetails({ address, reports, comments, rebuttals }: Prope
                   </div>
 
                   <p className="text-text-muted">{report.description}</p>
+
+                  <div className="flex flex-wrap gap-2 text-xs text-text-muted">
+                    {report.issue_started_at && (
+                      <span className="rounded-full bg-surface-muted px-2.5 py-1">
+                        Issue started: {new Date(report.issue_started_at).toLocaleDateString()}
+                      </span>
+                    )}
+                    {report.landlord_notified_at && (
+                      <span className="rounded-full bg-surface-muted px-2.5 py-1">
+                        Landlord notified: {new Date(report.landlord_notified_at).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+
+                  {report.evidence_details && (
+                    <div className="rounded-lg bg-surface-muted p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                        Evidence summary
+                      </p>
+                      <p className="mt-1 text-sm text-text">{report.evidence_details}</p>
+                    </div>
+                  )}
 
                   {report.photo_urls && report.photo_urls.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto">
@@ -105,6 +169,34 @@ export function PropertyDetails({ address, reports, comments, rebuttals }: Prope
                         </time>
                       </div>
                       <p className="text-sm text-teal-900">{rebuttal.body}</p>
+                    </div>
+                  )}
+
+                  {!rebuttal && (
+                    <div className="space-y-3 border-t border-border pt-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-medium text-text">Own or manage this property?</p>
+                          <p className="text-xs text-text-muted">
+                            Add one paid public response to this safety report.
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant={openResponseFor === report.id ? 'ghost' : 'secondary'}
+                          onClick={() => setOpenResponseFor((current) => current === report.id ? null : report.id)}
+                        >
+                          {openResponseFor === report.id ? 'Close' : 'Respond'}
+                        </Button>
+                      </div>
+
+                      {openResponseFor === report.id && (
+                        <LandlordResponseForm
+                          responseType="report"
+                          targetId={report.id}
+                          propertyId={propertyId}
+                        />
+                      )}
                     </div>
                   )}
                 </div>

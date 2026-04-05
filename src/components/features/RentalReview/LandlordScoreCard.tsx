@@ -2,7 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, Button } from '../../common';
 import { supabase } from '../../../lib/supabase';
-import type { Landlord, RentalReview, LandlordScore } from '../../../types/database';
+import type {
+  Landlord,
+  RentalReview,
+  LandlordScore,
+  ReviewResponse,
+} from '../../../types/database';
+import { LandlordResponseForm } from '../LandlordResponses/LandlordResponseForm';
 
 const RELATIONSHIP_BADGES: Record<string, { icon: string; label: string }> = {
   property_owner: { icon: '🏠', label: 'Property Owner' },
@@ -40,26 +46,31 @@ function getBarColor(score: number): string {
 
 interface LandlordScoreCardProps {
   propertyId: string;
+  refreshToken?: number;
 }
 
-export function LandlordScoreCard({ propertyId }: LandlordScoreCardProps) {
+export function LandlordScoreCard({ propertyId, refreshToken = 0 }: LandlordScoreCardProps) {
   const [landlords, setLandlords] = useState<Landlord[]>([]);
   const [reviews, setReviews] = useState<RentalReview[]>([]);
   const [scores, setScores] = useState<LandlordScore[]>([]);
+  const [reviewResponses, setReviewResponses] = useState<ReviewResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openResponseFor, setOpenResponseFor] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
-      const [landlordRes, reviewRes] = await Promise.all([
+      const [landlordRes, reviewRes, reviewResponseRes] = await Promise.all([
         supabase.from('landlords').select('*').eq('property_id', propertyId),
         supabase.from('rental_reviews').select('*').eq('property_id', propertyId).order('created_at', { ascending: false }),
+        supabase.from('review_responses').select('*').eq('property_id', propertyId),
       ]);
 
       const fetchedLandlords = landlordRes.data || [];
       const fetchedReviews = reviewRes.data || [];
       setLandlords(fetchedLandlords);
       setReviews(fetchedReviews);
+      setReviewResponses(reviewResponseRes.data || []);
 
       if (fetchedLandlords.length > 0) {
         const ids = fetchedLandlords.map((l) => l.id);
@@ -73,7 +84,7 @@ export function LandlordScoreCard({ propertyId }: LandlordScoreCardProps) {
       setLoading(false);
     }
     fetchData();
-  }, [propertyId]);
+  }, [propertyId, refreshToken]);
 
   if (loading) {
     return <p className="text-sm text-text-muted py-4">Loading rental reviews...</p>;
@@ -180,6 +191,7 @@ export function LandlordScoreCard({ propertyId }: LandlordScoreCardProps) {
             (review.responsiveness + review.fairness + review.respect + review.temperament +
               review.property_condition + review.communication + review.safety) / 7
           ).toFixed(1);
+          const reviewResponse = reviewResponses.find((response) => response.review_id === review.id);
 
           return (
             <Card key={review.id} className="space-y-2">
@@ -210,6 +222,52 @@ export function LandlordScoreCard({ propertyId }: LandlordScoreCardProps) {
                 })}
                 {review.is_anonymous && ' · Anonymous'}
               </p>
+
+              {reviewResponse ? (
+                <div className="rounded-lg border border-teal-200 bg-teal-50 p-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="inline-flex items-center rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-medium text-teal-700">
+                      Landlord Response
+                    </span>
+                    {reviewResponse.is_verified && (
+                      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                        Verified Owner
+                      </span>
+                    )}
+                    <time className="ml-auto text-xs text-text-muted">
+                      {new Date(reviewResponse.created_at).toLocaleDateString()}
+                    </time>
+                  </div>
+                  <p className="text-sm text-teal-900">{reviewResponse.body}</p>
+                </div>
+              ) : (
+                <div className="space-y-3 border-t border-border pt-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-text">Own or manage this property?</p>
+                      <p className="text-xs text-text-muted">
+                        Add one paid public response to this rental review.
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={openResponseFor === review.id ? 'ghost' : 'secondary'}
+                      onClick={() => setOpenResponseFor((current) => current === review.id ? null : review.id)}
+                    >
+                      {openResponseFor === review.id ? 'Close' : 'Respond'}
+                    </Button>
+                  </div>
+
+                  {openResponseFor === review.id && (
+                    <LandlordResponseForm
+                      responseType="review"
+                      targetId={review.id}
+                      propertyId={propertyId}
+                      landlordId={review.landlord_id}
+                    />
+                  )}
+                </div>
+              )}
             </Card>
           );
         })}

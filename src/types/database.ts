@@ -32,6 +32,10 @@ export type Database = {
           issue_type: string;
           severity: string;
           description: string;
+          evidence_tier: string;
+          evidence_details: string | null;
+          issue_started_at: string | null;
+          landlord_notified_at: string | null;
           photo_urls: string[] | null;
           is_anonymous: boolean;
           is_hidden: boolean;
@@ -44,6 +48,10 @@ export type Database = {
           issue_type: string;
           severity: string;
           description: string;
+          evidence_tier?: string;
+          evidence_details?: string | null;
+          issue_started_at?: string | null;
+          landlord_notified_at?: string | null;
           photo_urls?: string[] | null;
           is_anonymous?: boolean;
           is_hidden?: boolean;
@@ -168,6 +176,31 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['rental_reviews']['Insert']>;
         Relationships: [];
       };
+      review_responses: {
+        Row: {
+          id: string;
+          review_id: string;
+          property_id: string;
+          landlord_id: string;
+          landlord_email: string;
+          is_verified: boolean;
+          body: string;
+          stripe_payment_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          review_id: string;
+          property_id: string;
+          landlord_id: string;
+          landlord_email: string;
+          is_verified?: boolean;
+          body: string;
+          stripe_payment_id: string;
+        };
+        Update: Partial<Database['public']['Tables']['review_responses']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: {
       landlord_scores: {
@@ -197,4 +230,5 @@ export type Comment = Database['public']['Tables']['comments']['Row'];
 export type Rebuttal = Database['public']['Tables']['rebuttals']['Row'];
 export type Landlord = Database['public']['Tables']['landlords']['Row'];
 export type RentalReview = Database['public']['Tables']['rental_reviews']['Row'];
+export type ReviewResponse = Database['public']['Tables']['review_responses']['Row'];
 export type LandlordScore = Database['public']['Views']['landlord_scores']['Row'];

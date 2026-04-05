@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button, Card } from '../components/common';
 import { getSupportedCities, getCityBySlug } from '../data/cityRegistry';
 import { getResearchCityByName, getStats } from '../data/cityDatabase';
-import { validateAddress } from '../lib/usps';
+import { validateAddress } from '../lib/addressValidation';
 import { AddressAutocomplete } from '../components/features/AddressAutocomplete';
 
 function SafetyScoreBadge({ score }: { score: number }) {

@@ -33,3 +33,7 @@ typechain-types/
 
 # Spec documents
 md/
+
+# Test automation output
+test-results/
+playwright-report/

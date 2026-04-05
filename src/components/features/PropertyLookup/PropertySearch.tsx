@@ -1,15 +1,14 @@
 import { useState, type FormEvent } from 'react';
 import { Button, Input } from '../../common';
-import { validateAddress, type USPSValidationResult } from '../../../lib/usps';
+import { validateAddress, type AddressValidationResult } from '../../../lib/addressValidation';
 import { WaitlistForm } from '../Waitlist/WaitlistForm';
 
 interface PropertySearchProps {
-  onSearch: (result: USPSValidationResult) => void;
+  onSearch: (result: AddressValidationResult) => void;
   loading?: boolean;
-  citySlug?: string;
 }
 
-export function PropertySearch({ onSearch, loading, citySlug: _citySlug }: PropertySearchProps) {
+export function PropertySearch({ onSearch, loading }: PropertySearchProps) {
   const [streetAddress, setStreetAddress] = useState('');
   const [unit, setUnit] = useState('');
   const [validating, setValidating] = useState(false);
@@ -105,7 +104,7 @@ export function PropertySearch({ onSearch, loading, citySlug: _citySlug }: Prope
           </div>
         )}
         <p className="text-sm text-text-muted">
-          Enter any street address in a supported city. We validate it with the USPS to ensure accuracy and prevent duplicates.
+          Enter any street address in a supported city. We validate it to keep property records accurate and prevent duplicates.
         </p>
       </form>
       {unsupportedCity && (

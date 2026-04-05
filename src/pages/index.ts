@@ -7,3 +7,5 @@ export { KnowYourRightsPage } from './KnowYourRightsPage';
 export { LegalNoticePage } from './LegalNoticePage';
 export { ReviewPage } from './ReviewPage';
 export { CityPage } from './CityPage';
+export { TermsPage } from './TermsPage';
+export { PrivacyPage } from './PrivacyPage';

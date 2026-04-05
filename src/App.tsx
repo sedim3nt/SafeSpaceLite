@@ -10,6 +10,8 @@ import {
   LegalNoticePage,
   ReviewPage,
   CityPage,
+  TermsPage,
+  PrivacyPage,
 } from './pages';
 import { AdvocatePage } from './pages/AdvocatePage';
 import { BoulderLandingPage } from './pages/BoulderLandingPage';
@@ -34,6 +36,8 @@ function App() {
           <Route path="/boulder" element={<BoulderLandingPage />} />
           <Route path="/cities" element={<CitiesPage />} />
           <Route path="/city/:slug" element={<CityPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
         </Routes>
       </Layout>
       <AIChatWidget />

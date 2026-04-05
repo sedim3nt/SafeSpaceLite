@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, Button } from '../../common';
 import { Input, Select, Textarea } from '../../common/Form';
 import { useLocalStorage } from '../../../hooks';
@@ -16,7 +16,11 @@ const defaultIssues: TrackedIssue[] = [
   },
 ];
 
-export const TrackedIssues: React.FC = () => {
+interface TrackedIssuesProps {
+  initialAddress?: string;
+}
+
+export const TrackedIssues: React.FC<TrackedIssuesProps> = ({ initialAddress = '' }) => {
   const [issues, setIssues] = useLocalStorage<TrackedIssue[]>(
     'safespace-tracked-issues',
     defaultIssues
@@ -24,11 +28,18 @@ export const TrackedIssues: React.FC = () => {
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newIssue, setNewIssue] = useState({
-    propertyAddress: '',
+    propertyAddress: initialAddress,
     issueType: '',
     dateReported: '',
     notes: '',
   });
+
+  useEffect(() => {
+    if (initialAddress) {
+      setShowAddForm(true);
+      setNewIssue((current) => ({ ...current, propertyAddress: current.propertyAddress || initialAddress }));
+    }
+  }, [initialAddress]);
 
   const issueTypes = [
     { value: 'no-heat', label: 'No heat' },

@@ -1,17 +1,20 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { PropertySearch } from '../components/features/PropertyLookup/PropertySearch';
 import { PropertyDetails } from '../components/features/PropertyLookup/PropertyDetails';
 import { CommunityComments } from '../components/features/PropertyLookup/CommunityComments';
-import { RebuttalForm } from '../components/features/PropertyLookup/RebuttalForm';
 import { LandlordScoreCard } from '../components/features/RentalReview/LandlordScoreCard';
+import { JurisdictionLayers } from '../components/features/Jurisdictions/JurisdictionLayers';
 import { supabase } from '../lib/supabase';
-import { ensureProperty, type USPSValidationResult } from '../lib/usps';
+import { ensureProperty, type AddressValidationResult } from '../lib/addressValidation';
+import { finalizePendingLandlordResponse } from '../lib/landlordResponses';
+import { resolveJurisdictionLayers, type JurisdictionResolution } from '../data/jurisdictions';
 import type { Report, Comment as DbComment, Rebuttal, Property } from '../types/database';
 
 type Tab = 'health' | 'rental';
 
 export function PropertyLookupPage() {
+  const { propertyId: routePropertyId } = useParams<{ propertyId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchedAddress, setSearchedAddress] = useState('');
   const [property, setProperty] = useState<Property | null>(null);
@@ -20,84 +23,130 @@ export function PropertyLookupPage() {
   const [rebuttals, setRebuttals] = useState<Rebuttal[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [uspsInfo, setUspsInfo] = useState<USPSValidationResult | null>(null);
+  const [validationInfo, setValidationInfo] = useState<AddressValidationResult | null>(null);
+  const [jurisdictions, setJurisdictions] = useState<JurisdictionResolution | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('health');
-  const [paymentStatus, setPaymentStatus] = useState<'success' | 'cancelled' | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<'success' | 'cancelled' | 'error' | null>(null);
+  const [paymentMessage, setPaymentMessage] = useState('');
+  const [reviewRefreshToken, setReviewRefreshToken] = useState(0);
 
-  // Handle Stripe redirect — insert pending rebuttal after successful payment
-  useEffect(() => {
-    const payment = searchParams.get('payment');
-    const reportId = searchParams.get('report');
-    const propertyId = searchParams.get('property');
+  const fetchPropertyData = useCallback(async (propertyId: string, existingProperty?: Property) => {
+    const prop = existingProperty || (
+      await supabase
+        .from('properties')
+        .select('*')
+        .eq('id', propertyId)
+        .single()
+    ).data;
 
-    if (payment === 'success' && reportId && propertyId) {
-      setPaymentStatus('success');
-      // Clear URL params
-      setSearchParams({});
-
-      // Read pending rebuttal from sessionStorage and insert
-      const pending = sessionStorage.getItem('pending_rebuttal');
-      if (pending) {
-        try {
-          const data = JSON.parse(pending);
-          supabase.from('rebuttals').insert({
-            report_id: data.report_id,
-            property_id: data.property_id,
-            landlord_email: data.landlord_email,
-            body: data.body,
-          } as any).then(() => {
-            sessionStorage.removeItem('pending_rebuttal');
-          });
-        } catch { /* ignore parse errors */ }
-      }
-    } else if (payment === 'cancelled') {
-      setPaymentStatus('cancelled');
-      setSearchParams({});
-    }
-  }, [searchParams, setSearchParams]);
-
-  const fetchPropertyData = useCallback(async (addressHash: string) => {
-    const { data: prop } = await supabase
-      .from('properties')
-      .select('*')
-      .eq('address_hash', addressHash)
-      .single();
-
-    if (prop) {
-      setProperty(prop);
-
-      const [reportsRes, commentsRes, rebuttalsRes] = await Promise.all([
-        supabase.from('reports').select('*').eq('property_id', prop.id).order('created_at', { ascending: false }),
-        supabase.from('comments').select('*').eq('property_id', prop.id).order('created_at', { ascending: false }),
-        supabase.from('rebuttals').select('*').eq('property_id', prop.id),
-      ]);
-
-      setReports(reportsRes.data || []);
-      setComments(commentsRes.data || []);
-      setRebuttals(rebuttalsRes.data || []);
-    } else {
+    if (!prop) {
       setProperty(null);
       setReports([]);
       setComments([]);
       setRebuttals([]);
+      return;
     }
+
+    setProperty(prop);
+    setSearched(true);
+    setSearchedAddress(prop.address_normalized);
+    setJurisdictions(
+      resolveJurisdictionLayers({
+        city: prop.city,
+        state: prop.state,
+        zip: prop.zip || '',
+      }),
+    );
+
+    const [reportsRes, commentsRes, rebuttalsRes] = await Promise.all([
+      supabase.from('reports').select('*').eq('property_id', prop.id).order('created_at', { ascending: false }),
+      supabase.from('comments').select('*').eq('property_id', prop.id).order('created_at', { ascending: false }),
+      supabase.from('rebuttals').select('*').eq('property_id', prop.id),
+    ]);
+
+    setReports(reportsRes.data || []);
+    setComments(commentsRes.data || []);
+    setRebuttals(rebuttalsRes.data || []);
   }, []);
 
-  const handleSearch = async (result: USPSValidationResult) => {
+  useEffect(() => {
+    if (!routePropertyId) return;
+
+    setLoading(true);
+    fetchPropertyData(routePropertyId)
+      .finally(() => setLoading(false));
+  }, [routePropertyId, fetchPropertyData]);
+
+  useEffect(() => {
+    const payment = searchParams.get('payment');
+    const sessionId = searchParams.get('session_id');
+    const propertyId = routePropertyId || searchParams.get('property') || undefined;
+    const responseType = searchParams.get('type');
+
+    if (payment === 'cancelled') {
+      setPaymentStatus('cancelled');
+      setPaymentMessage('Payment was cancelled. Your landlord response was not submitted.');
+      setSearchParams({});
+      return;
+    }
+
+    if (payment !== 'success' || !sessionId || !propertyId) return;
+    const paidSessionId = sessionId;
+    const resolvedPropertyId = propertyId;
+
+    let cancelled = false;
+
+    async function completeLandlordResponse() {
+      try {
+        await finalizePendingLandlordResponse(paidSessionId);
+        if (cancelled) return;
+        setPaymentStatus('success');
+        setPaymentMessage(
+          responseType === 'review'
+            ? 'Payment received. The landlord response was added to this rental review.'
+            : 'Payment received. The landlord response was added to this safety report.',
+        );
+        await fetchPropertyData(resolvedPropertyId);
+        setReviewRefreshToken((current) => current + 1);
+      } catch (err) {
+        if (cancelled) return;
+        setPaymentStatus('error');
+        setPaymentMessage(
+          err instanceof Error
+            ? err.message
+            : 'Payment was completed, but SafeSpace could not save the landlord response.',
+        );
+      } finally {
+        if (!cancelled) {
+          setSearchParams({});
+        }
+      }
+    }
+
+    completeLandlordResponse();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [routePropertyId, searchParams, setSearchParams, fetchPropertyData]);
+
+  const handleSearch = async (result: AddressValidationResult) => {
     setSearchedAddress(result.normalized);
-    setUspsInfo(result);
+    setValidationInfo(result);
+    setJurisdictions(result.jurisdictions);
     setLoading(true);
     setSearched(true);
 
     // Ensure property exists so rental tab works even for new addresses
-    await ensureProperty(result);
-    await fetchPropertyData(result.addressHash);
+    const prop = await ensureProperty(result);
+    await fetchPropertyData(prop.id, prop);
     setLoading(false);
   };
 
   const handleRefresh = () => {
     if (property) {
-      fetchPropertyData(property.address_hash);
+      fetchPropertyData(property.id);
+      setReviewRefreshToken((current) => current + 1);
     }
   };
 
@@ -109,45 +158,73 @@ export function PropertyLookupPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-text">Property Health Lookup</h1>
+        <h1 className="text-3xl font-bold text-text">Property Lookup</h1>
         <p className="mt-2 text-lg text-text-muted">
-          Research rental property health history and read community experiences
+          Research health history, landlord reviews, and the laws that apply to a rental address
         </p>
       </div>
 
       {paymentStatus === 'success' && (
         <div className="rounded-lg bg-green-50 border border-green-200 p-4 mb-4">
-          <p className="text-sm font-medium text-green-800">✓ Payment received. Your landlord rebuttal has been submitted and will appear with the report.</p>
+          <p className="text-sm font-medium text-green-800">✓ {paymentMessage}</p>
         </div>
       )}
       {paymentStatus === 'cancelled' && (
         <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 mb-4">
-          <p className="text-sm font-medium text-amber-800">Payment was cancelled. Your rebuttal was not submitted.</p>
+          <p className="text-sm font-medium text-amber-800">{paymentMessage}</p>
+        </div>
+      )}
+      {paymentStatus === 'error' && (
+        <div className="rounded-lg bg-red-50 border border-red-200 p-4 mb-4">
+          <p className="text-sm font-medium text-red-800">{paymentMessage}</p>
         </div>
       )}
 
       <PropertySearch onSearch={handleSearch} loading={loading} />
 
-      {searched && !loading && uspsInfo && (
+      {!searched && (
+        <div className="rounded-xl bg-surface-muted p-6">
+          <div className="space-y-3">
+            <h3 className="font-semibold text-text">How Property Lookup Works</h3>
+            <ul className="space-y-2 text-sm text-text-muted">
+              <li>1. Enter a rental property address above.</li>
+              <li>2. View health and safety reports, comments, and landlord rebuttals.</li>
+              <li>3. Switch to the rental experience tab for landlord reviews and ratings.</li>
+              <li>4. Report a new issue or start tracking deadlines from the property view.</li>
+            </ul>
+            <p className="text-xs text-text-muted">No account is required to search and review public property records.</p>
+          </div>
+        </div>
+      )}
+
+      {searched && !loading && validationInfo && (
         <div className="rounded-lg bg-green-50 border border-green-200 p-3 flex items-start gap-2">
           <span className="text-green-600 text-lg">✓</span>
           <div>
-            <p className="text-sm font-medium text-green-800">
-              USPS Verified: {uspsInfo.normalized}
-            </p>
-            {uspsInfo.additionalInfo?.vacant === 'Y' && (
-              <p className="text-xs text-amber-700 mt-1">⚠ USPS reports this address as vacant</p>
+              <p className="text-sm font-medium text-green-800">
+              Verified address: {validationInfo.normalized}
+              </p>
+            {validationInfo.additionalInfo?.vacant === 'Y' && (
+              <p className="text-xs text-amber-700 mt-1">⚠ Validation metadata indicates this address may be vacant</p>
             )}
-            {uspsInfo.additionalInfo?.business === 'Y' && (
+            {validationInfo.additionalInfo?.business === 'Y' && (
               <p className="text-xs text-amber-700 mt-1">ℹ This is a commercial address</p>
             )}
-            {uspsInfo.corrections?.some(c => c.code === '32') && (
+            {validationInfo.corrections?.some(c => c.code === '32') && (
               <p className="text-xs text-gray-600 mt-1">
                 Tip: Add an apartment or unit number for more specific results
               </p>
             )}
           </div>
         </div>
+      )}
+
+      {jurisdictions && (
+        <JurisdictionLayers
+          layers={jurisdictions.layers}
+          title="What laws apply to this address?"
+          subtitle="SafeSpace layers city, county, state, and federal housing rules so the property record matches the jurisdiction stack behind it."
+        />
       )}
 
       {searched && !loading && property && (
@@ -176,6 +253,7 @@ export function PropertyLookupPage() {
           {activeTab === 'health' && (
             <>
               <PropertyDetails
+                propertyId={property.id}
                 address={property.address_normalized}
                 reports={reports}
                 comments={comments}
@@ -189,19 +267,12 @@ export function PropertyLookupPage() {
                   onCommentAdded={handleRefresh}
                 />
               </div>
-
-              {reports.length > 0 && (
-                <div className="border-t border-border pt-8">
-                  <h3 className="mb-4 text-lg font-semibold text-text">Property Owner?</h3>
-                  <RebuttalForm reportId={reports[0].id} propertyId={property.id} />
-                </div>
-              )}
             </>
           )}
 
           {/* Rental Experience tab */}
           {activeTab === 'rental' && (
-            <LandlordScoreCard propertyId={property.id} />
+            <LandlordScoreCard propertyId={property.id} refreshToken={reviewRefreshToken} />
           )}
         </>
       )}

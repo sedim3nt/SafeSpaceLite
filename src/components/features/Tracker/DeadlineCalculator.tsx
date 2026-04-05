@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Input, Select } from '../../common/Form';
 import { Card } from '../../common';
 
@@ -26,13 +26,7 @@ export const DeadlineCalculator: React.FC = () => {
     { value: '30day', label: 'Non-emergency issues', deadline: '30 days' },
   ];
 
-  useEffect(() => {
-    if (issueType && reportedDate && reportedTime) {
-      calculateDeadline();
-    }
-  }, [issueType, reportedDate, reportedTime]);
-
-  const calculateDeadline = () => {
+  const calculateDeadline = useCallback(() => {
     const reportDateTime = new Date(`${reportedDate}T${reportedTime}`);
     const now = new Date();
     
@@ -80,7 +74,13 @@ export const DeadlineCalculator: React.FC = () => {
       status,
       legalDeadline,
     });
-  };
+  }, [issueType, reportedDate, reportedTime]);
+
+  useEffect(() => {
+    if (issueType && reportedDate && reportedTime) {
+      calculateDeadline();
+    }
+  }, [issueType, reportedDate, reportedTime, calculateDeadline]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

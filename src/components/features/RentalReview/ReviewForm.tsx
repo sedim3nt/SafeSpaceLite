@@ -4,7 +4,7 @@ import { ProtectedAction } from '../../auth/ProtectedAction';
 import { ReviewAIHelper } from './ReviewAIHelper';
 import { PropertySearch } from '../PropertyLookup/PropertySearch';
 import { supabase } from '../../../lib/supabase';
-import { ensureProperty, type USPSValidationResult } from '../../../lib/usps';
+import { ensureProperty, type AddressValidationResult } from '../../../lib/addressValidation';
 import { useAuth } from '../../../contexts/AuthContext';
 import type { Landlord } from '../../../types/database';
 
@@ -91,7 +91,7 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
       });
   }, [propertyId]);
 
-  const handleAddressSearch = async (result: USPSValidationResult) => {
+  const handleAddressSearch = async (result: AddressValidationResult) => {
     const prop = await ensureProperty(result);
     setPropertyId(prop.id);
     setAddress(result.normalized);

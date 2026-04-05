@@ -841,7 +841,7 @@ addZipRange(14850, 14853, 'ithaca');
 ZIP_TO_SLUG['14882'] = 'ithaca';
 
 /**
- * Match a USPS-validated address to a supported city.
+ * Match a validated address to a supported city.
  * Returns the city slug or null if unsupported.
  */
 export function findCityByAddress(city: string, state: string, zip: string): string | null {

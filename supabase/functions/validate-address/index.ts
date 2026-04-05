@@ -8,8 +8,206 @@ const CORS_HEADERS = {
 
 const USPS_TOKEN_URL = "https://apis.usps.com/oauth2/v3/token";
 const USPS_ADDRESS_URL = "https://apis.usps.com/addresses/v3/address";
+const GOOGLE_ADDRESS_URL = "https://addressvalidation.googleapis.com/v1:validateAddress";
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
+
+function getAddressValidationProvider(): "usps" | "google" {
+  const configured = (Deno.env.get("ADDRESS_VALIDATION_PROVIDER") || "usps").toLowerCase();
+  return configured === "google" ? "google" : "usps";
+}
+
+function normalizeAddress(input: {
+  streetAddress: string;
+  secondaryAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+}) {
+  const line1 = input.streetAddress.trim();
+  const line2 = input.secondaryAddress?.trim() || "";
+  const locality = input.city?.trim() || "";
+  const administrativeArea = input.state?.trim().toUpperCase() || "";
+  const postalCode = input.zipCode?.trim() || "";
+  return {
+    line1,
+    line2,
+    locality,
+    administrativeArea,
+    postalCode,
+  };
+}
+
+async function hashNormalizedAddress(normalized: string): Promise<string> {
+  const hashInput = normalized.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim().replace(/\s+/g, " ");
+  const encoder = new TextEncoder();
+  const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(hashInput));
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function buildNormalizedAddress(parts: {
+  streetAddress: string;
+  secondaryAddress?: string;
+  city: string;
+  state: string;
+  zipCode: string;
+}) {
+  return `${parts.streetAddress}${parts.secondaryAddress ? " " + parts.secondaryAddress : ""}, ${parts.city}, ${parts.state} ${parts.zipCode}`;
+}
+
+async function validateWithGoogle(input: {
+  streetAddress: string;
+  secondaryAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+}) {
+  const apiKey = Deno.env.get("GOOGLE_ADDRESS_VALIDATION_API_KEY") || Deno.env.get("GOOGLE_MAPS_API_KEY");
+  if (!apiKey) {
+    throw new Error("Google Address Validation API key not configured");
+  }
+
+  const normalizedInput = normalizeAddress(input);
+  const addressLines = [normalizedInput.line1];
+  if (normalizedInput.line2) addressLines.push(normalizedInput.line2);
+  const trailingLine = [normalizedInput.locality, normalizedInput.administrativeArea, normalizedInput.postalCode]
+    .filter(Boolean)
+    .join(", ");
+  if (trailingLine) addressLines.push(trailingLine);
+
+  const resp = await fetch(`${GOOGLE_ADDRESS_URL}?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      address: {
+        regionCode: "US",
+        locality: normalizedInput.locality || undefined,
+        administrativeArea: normalizedInput.administrativeArea || undefined,
+        postalCode: normalizedInput.postalCode || undefined,
+        addressLines,
+      },
+      enableUspsCass: true,
+    }),
+  });
+
+  if (!resp.ok) {
+    const detail = await resp.text();
+    throw new Error(`Google validation failed (${resp.status}): ${detail}`);
+  }
+
+  const data = await resp.json();
+  const result = data.result;
+  const address = result?.address;
+  const postalAddress = address?.postalAddress;
+  if (!postalAddress?.addressLines?.length) {
+    return { valid: false, error: "Address not found" };
+  }
+
+  const city = postalAddress.locality || normalizedInput.locality;
+  const state = postalAddress.administrativeArea || normalizedInput.administrativeArea;
+  const zipCode = postalAddress.postalCode || normalizedInput.postalCode;
+  const streetAddress = postalAddress.addressLines[0] || normalizedInput.line1;
+  const secondaryAddress = postalAddress.addressLines.slice(1).join(" ").trim();
+  const normalized = buildNormalizedAddress({ streetAddress, secondaryAddress, city, state, zipCode });
+  const addressHash = await hashNormalizedAddress(normalized);
+  const supportedCity = findSupportedCity(zipCode, city, state);
+
+  return {
+    valid: true,
+    provider: "google",
+    isBoulder: supportedCity === "boulder",
+    supportedCity,
+    citySlug: supportedCity,
+    address: {
+      streetAddress,
+      secondaryAddress,
+      city,
+      state,
+      zipCode,
+      zipPlus4: "",
+    },
+    normalized,
+    addressHash,
+    corrections: [],
+    additionalInfo: {
+      business: result?.metadata?.business ? "Y" : "N",
+      residential: result?.metadata?.residential,
+      possibleNextAction: result?.verdict?.possibleNextAction,
+    },
+  };
+}
+
+async function validateWithUSPS(input: {
+  streetAddress: string;
+  secondaryAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+}) {
+  const token = await getUSPSToken();
+
+  const params = new URLSearchParams();
+  params.set("streetAddress", input.streetAddress);
+  if (input.secondaryAddress) params.set("secondaryAddress", input.secondaryAddress);
+  if (input.city) params.set("city", input.city);
+  if (input.state) params.set("state", input.state);
+  if (input.zipCode) params.set("ZIPCode", input.zipCode);
+
+  const uspsResp = await fetch(`${USPS_ADDRESS_URL}?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!uspsResp.ok) {
+    const errText = await uspsResp.text();
+    return {
+      error: "USPS validation failed",
+      detail: errText,
+      status: 422,
+    };
+  }
+
+  const uspsData = await uspsResp.json();
+  const addr = uspsData.address;
+
+  if (!addr) {
+    return { valid: false, error: "Address not found" };
+  }
+
+  const supportedCity = findSupportedCity(addr.ZIPCode, addr.city, addr.state);
+  const normalized = buildNormalizedAddress({
+    streetAddress: addr.streetAddress,
+    secondaryAddress: addr.secondaryAddress || "",
+    city: addr.city,
+    state: addr.state,
+    zipCode: addr.ZIPCode,
+  });
+  const addressHash = await hashNormalizedAddress(normalized);
+
+  return {
+    valid: true,
+    provider: "usps",
+    isBoulder: supportedCity === "boulder",
+    supportedCity,
+    citySlug: supportedCity,
+    address: {
+      streetAddress: addr.streetAddress,
+      secondaryAddress: addr.secondaryAddress || "",
+      city: addr.city,
+      state: addr.state,
+      zipCode: addr.ZIPCode,
+      zipPlus4: addr.ZIPPlus4 || "",
+    },
+    normalized,
+    addressHash,
+    corrections: uspsData.corrections || [],
+    additionalInfo: {
+      deliveryPoint: uspsData.additionalInfo?.deliveryPoint,
+      vacant: uspsData.additionalInfo?.vacant,
+      business: uspsData.additionalInfo?.business,
+    },
+  };
+}
 
 async function getUSPSToken(): Promise<string> {
   if (cachedToken && Date.now() < cachedToken.expiresAt - 60_000) {
@@ -138,75 +336,23 @@ Deno.serve(async (req) => {
       );
     }
 
-    const token = await getUSPSToken();
+    const input = { streetAddress, secondaryAddress, city, state, zipCode };
+    const provider = getAddressValidationProvider();
+    const result = provider === "google"
+      ? await validateWithGoogle(input)
+      : await validateWithUSPS(input);
 
-    const params = new URLSearchParams();
-    params.set("streetAddress", streetAddress);
-    if (secondaryAddress) params.set("secondaryAddress", secondaryAddress);
-    if (city) params.set("city", city);
-    if (state) params.set("state", state);
-    if (zipCode) params.set("ZIPCode", zipCode);
+    if ("status" in result) {
+      return new Response(
+        JSON.stringify({ error: result.error, detail: result.detail }),
+        { status: result.status, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
+      );
+    }
 
-    const uspsResp = await fetch(`${USPS_ADDRESS_URL}?${params.toString()}`, {
-      headers: { Authorization: `Bearer ${token}` },
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
-
-    if (!uspsResp.ok) {
-      const errText = await uspsResp.text();
-      return new Response(
-        JSON.stringify({ error: "USPS validation failed", detail: errText }),
-        { status: 422, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
-      );
-    }
-
-    const uspsData = await uspsResp.json();
-    const addr = uspsData.address;
-
-    if (!addr) {
-      return new Response(
-        JSON.stringify({ valid: false, error: "Address not found" }),
-        { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
-      );
-    }
-
-    const supportedCity = findSupportedCity(addr.ZIPCode, addr.city, addr.state);
-
-    // Backward compat
-    const isBoulder = supportedCity === "boulder";
-
-    const normalized = `${addr.streetAddress}${addr.secondaryAddress ? " " + addr.secondaryAddress : ""}, ${addr.city}, ${addr.state} ${addr.ZIPCode}`;
-
-    const hashInput = normalized.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim().replace(/\s+/g, " ");
-    const encoder = new TextEncoder();
-    const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(hashInput));
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const addressHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-
-    return new Response(
-      JSON.stringify({
-        valid: true,
-        isBoulder,
-        supportedCity,
-        citySlug: supportedCity,
-        address: {
-          streetAddress: addr.streetAddress,
-          secondaryAddress: addr.secondaryAddress || "",
-          city: addr.city,
-          state: addr.state,
-          zipCode: addr.ZIPCode,
-          zipPlus4: addr.ZIPPlus4 || "",
-        },
-        normalized,
-        addressHash,
-        corrections: uspsData.corrections || [],
-        additionalInfo: {
-          deliveryPoint: uspsData.additionalInfo?.deliveryPoint,
-          vacant: uspsData.additionalInfo?.vacant,
-          business: uspsData.additionalInfo?.business,
-        },
-      }),
-      { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
-    );
   } catch (err) {
     return new Response(
       JSON.stringify({ error: "Internal error", detail: String(err) }),

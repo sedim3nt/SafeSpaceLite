@@ -30,14 +30,14 @@
 
 ### Safety Flow (address → rights → action)
 1. User enters address on homepage or /property-lookup
-2. USPS validates and identifies jurisdiction
+2. Address validation identifies jurisdiction
 3. If supported city: show rights, deadlines, enforcement contacts, reviews
 4. If unsupported city: show AI Advocate + general rights + review option
 5. User can: view rights → report issue → track response → generate legal notice
 
 ### Review Flow (rate → share → help future tenants)
 1. User goes to /review (or clicks "Leave a Review" from any page)
-2. Step 1: Enter address (USPS validated, property created/found)
+2. Step 1: Enter address (validated, property created/found)
 3. Step 2: Select relationship type (owner, management co, master tenant, owner-occupant, co-op)
 4. Step 3: Rate across 7 categories (1-5 emoji scale)
 5. Step 4: Select tags, write comment, choose anonymous/named
@@ -75,7 +75,7 @@
 ## Tech Stack
 - Vite + React + TypeScript + TailwindCSS
 - Supabase (auth, reviews, properties, landlords)
-- USPS Address Validation API
+- Address validation API
 - OpenRouter / Claude Haiku (AI Advocate)
 - GitHub Pages (static hosting)
 - Stone Garden design system (rice paper palette, Vollkorn/Cabin fonts)

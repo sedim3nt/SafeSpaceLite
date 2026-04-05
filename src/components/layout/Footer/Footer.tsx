@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export function Footer() {
   return (
     <footer className="mt-auto border-t border-border bg-bamboo-50">
@@ -28,18 +30,33 @@ export function Footer() {
             <h3 className="text-sm font-semibold uppercase tracking-wider text-text">Resources</h3>
             <ul className="mt-4 space-y-3">
               <li>
-                <a href="https://bouldercolorado.gov/services/renter-resources" target="_blank" rel="noopener noreferrer" className="text-sm text-text-muted transition-colors hover:text-sage-600">
-                  Boulder Tenant Rights
-                </a>
+                <Link to="/cities" className="text-sm text-text-muted transition-colors hover:text-sage-600">
+                  City Coverage
+                </Link>
               </li>
               <li>
-                <a href="https://www.cobar.org/For-the-Public/Find-a-Lawyer" target="_blank" rel="noopener noreferrer" className="text-sm text-text-muted transition-colors hover:text-sage-600">
-                  Legal Aid Foundation
-                </a>
+                <Link to="/know-your-rights" className="text-sm text-text-muted transition-colors hover:text-sage-600">
+                  Know Your Rights
+                </Link>
               </li>
               <li>
-                <a href="https://leg.colorado.gov/bills/hb24-1098" target="_blank" rel="noopener noreferrer" className="text-sm text-text-muted transition-colors hover:text-sage-600">
-                  2024 Health Laws
+                <Link to="/legal-notice" className="text-sm text-text-muted transition-colors hover:text-sage-600">
+                  Legal Notice Generator
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="text-sm text-text-muted transition-colors hover:text-sage-600">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="text-sm text-text-muted transition-colors hover:text-sage-600">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <a href="mailto:hello@spirittree.dev" className="text-sm text-text-muted transition-colors hover:text-sage-600">
+                  Contact SafeSpace
                 </a>
               </li>
             </ul>
@@ -48,7 +65,8 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-wider text-text">About SafeSpace</h3>
             <p className="mt-4 text-sm leading-relaxed text-text-muted">
-              Empowering Boulder County renters with health and safety guidance and transparent landlord accountability.
+              SafeSpace helps renters understand the laws that apply to their address, document safety issues,
+              and review landlord behavior with stronger privacy and accountability controls.
             </p>
           </div>
         </div>

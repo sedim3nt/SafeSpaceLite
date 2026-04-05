@@ -1,9 +1,13 @@
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DeadlineCalculator } from '../components/features/Tracker/DeadlineCalculator';
 import { TrackedIssues } from '../components/features/Tracker/TrackedIssues';
 import { Card } from '../components/common';
 
 export const TrackerPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const initialAddress = searchParams.get('address') ?? '';
+
   return (
     <div className="space-y-8">
       <div>
@@ -20,7 +24,7 @@ export const TrackerPage: React.FC = () => {
         </div>
 
         <div>
-          <TrackedIssues />
+          <TrackedIssues initialAddress={initialAddress} />
         </div>
       </div>
 

@@ -4,6 +4,8 @@ import { getResearchCity, getStateProfile, type ResearchCity } from '../data/cit
 import { Card, Button } from '../components/common';
 import { CityRightsAccordion } from '../components/features/Rights/CityRightsAccordion';
 import { CityEmergencyContacts } from '../components/features/EmergencyGuide/CityEmergencyContacts';
+import { JurisdictionLayers } from '../components/features/Jurisdictions/JurisdictionLayers';
+import { getJurisdictionLayersForCitySlug } from '../data/jurisdictions';
 
 function ScoreBadge({ score }: { score: number }) {
   const color = score >= 7 ? 'bg-green-100 text-green-800' : score >= 4 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800';
@@ -18,6 +20,7 @@ function ScoreBadge({ score }: { score: number }) {
 /** Renders a research-only city (no deep data) */
 function ResearchCityPage({ city }: { city: ResearchCity }) {
   const stateProfile = getStateProfile(city.state);
+  const jurisdictions = getJurisdictionLayersForCitySlug(city.slug);
 
   return (
     <div className="space-y-10">
@@ -55,6 +58,15 @@ function ResearchCityPage({ city }: { city: ResearchCity }) {
           </p>
         </Card>
       </div>
+
+      {jurisdictions && (
+        <JurisdictionLayers
+          layers={jurisdictions.layers}
+          title="County, State, and Federal Layers"
+          subtitle={`SafeSpace resolves ${city.city} into the local jurisdiction stack that shapes inspections, deadlines, discrimination protections, and escalation paths.`}
+          omitKinds={['city']}
+        />
+      )}
 
       {/* Repair Deadlines */}
       <section>
@@ -172,6 +184,8 @@ export function CityPage() {
   const deepCity = slug ? getCityBySlug(slug) : undefined;
 
   if (deepCity) {
+    const jurisdictions = getJurisdictionLayersForCitySlug(deepCity.slug);
+
     return (
       <div className="space-y-10">
         {/* Hero */}
@@ -206,6 +220,15 @@ export function CityPage() {
             <p className="mt-1 text-lg font-semibold text-ink">{deepCity.keyLaws.length}</p>
           </Card>
         </div>
+
+        {jurisdictions && (
+          <JurisdictionLayers
+            layers={jurisdictions.layers}
+            title="County, State, and Federal Layers"
+            subtitle={`SafeSpace resolves ${deepCity.name} into the enforcement and legal stack behind the city-specific rules below.`}
+            omitKinds={['city']}
+          />
+        )}
 
         {/* Rights */}
         <section>

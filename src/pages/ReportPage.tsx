@@ -1,11 +1,12 @@
 import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Button, Card, Input, Textarea, Select } from '../components/common';
 import { ProtectedAction } from '../components/auth/ProtectedAction';
 import { useAuth } from '../contexts/AuthContext';
 import { useFormBehavior } from '../hooks';
 import { supabase } from '../lib/supabase';
-import { validateAddress, ensureProperty } from '../lib/usps';
+import { validateAddress, ensureProperty } from '../lib/addressValidation';
+import type { Database } from '../types/database';
 
 /** Strip EXIF metadata by re-encoding the image through a canvas */
 function stripExif(file: File): Promise<Blob> {
@@ -48,16 +49,42 @@ const severityOptions = [
   { value: 'standard', label: 'Standard (7–30 day repair window)' },
 ];
 
+const evidenceTierOptions = [
+  { value: 'narrative_only', label: 'Level 1: Narrative only' },
+  { value: 'photo_documentation', label: 'Level 2: Photo or document evidence' },
+  { value: 'third_party_test', label: 'Level 3: Third-party test or inspection' },
+  { value: 'official_finding', label: 'Level 4: Official agency finding' },
+];
+
+function EvidenceTierGuide() {
+  return (
+    <Card className="border-blue-200 bg-blue-50 p-4">
+      <div className="space-y-1 text-sm text-blue-900">
+        <p className="font-semibold">How SafeSpace grades evidence</p>
+        <p>Level 1: narrative only.</p>
+        <p>Level 2: photos, screenshots, receipts, or documents.</p>
+        <p>Level 3: third-party tests or inspections.</p>
+        <p>Level 4: official agency notice, citation, or written finding.</p>
+      </div>
+    </Card>
+  );
+}
 
 export function ReportPage() {
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { isHumanLikely, onKeyActivity, honeypot, setHoneypot } = useFormBehavior();
 
   const [form, setForm] = useState({
-    address: '',
+    address: searchParams.get('address') ?? '',
     issueType: '',
     severity: '',
     description: '',
+    evidenceTier: 'narrative_only',
+    evidenceDetails: '',
+    dateOccurred: '',
+    landlordNotified: false,
+    dateNotified: '',
     isAnonymous: true,
   });
   const [photos, setPhotos] = useState<File[]>([]);
@@ -98,19 +125,19 @@ export function ReportPage() {
     setError('');
 
     try {
-      // Validate address through USPS API
-      const uspsResult = await validateAddress(form.address);
-      if (!uspsResult.valid) {
+      // Validate address through the configured provider
+      const validationResult = await validateAddress(form.address);
+      if (!validationResult.valid) {
         setError('Address not found. Please enter a valid street address.');
         return;
       }
-      if (!uspsResult.supportedCity) {
-        setError(`This address is in ${uspsResult.address.city}, ${uspsResult.address.state}. SafeSpace doesn't cover this area yet.`);
+      if (!validationResult.supportedCity) {
+        setError(`This address is in ${validationResult.address.city}, ${validationResult.address.state}. SafeSpace doesn't cover this area yet.`);
         return;
       }
 
-      // Find or create property using USPS-normalized address
-      const property = await ensureProperty(uspsResult);
+      // Find or create property using the canonical normalized address
+      const property = await ensureProperty(validationResult);
 
       // Upload photos to Supabase Storage (EXIF stripped for privacy)
       const photoUrls: string[] = [];
@@ -128,15 +155,21 @@ export function ReportPage() {
       }
 
       // Insert the report
-      const { error: reportErr } = await supabase.from('reports').insert({
+      const reportPayload: Database['public']['Tables']['reports']['Insert'] = {
         property_id: property.id,
         reporter_id: user.id,
         issue_type: form.issueType,
         severity: form.severity,
-        description: form.description,
+        description: form.description.trim(),
+        evidence_tier: form.evidenceTier,
+        evidence_details: form.evidenceDetails.trim() || null,
+        issue_started_at: form.dateOccurred || null,
+        landlord_notified_at: form.landlordNotified ? (form.dateNotified || null) : null,
         photo_urls: photoUrls.length > 0 ? photoUrls : null,
         is_anonymous: form.isAnonymous,
-      } as any);
+      };
+
+      const { error: reportErr } = await supabase.from('reports').insert(reportPayload);
 
       if (reportErr) throw reportErr;
       setSuccess(true);
@@ -183,6 +216,20 @@ export function ReportPage() {
           Document violations to build a community record and protect future tenants.
         </p>
       </div>
+
+      <Card className="bg-sage-50 border-sage-200">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-sage-900">Before You Report</p>
+          <ul className="space-y-1 text-sm text-sage-800">
+            <li>• Take photos and gather documentation first.</li>
+            <li>• Notify your landlord in writing when possible.</li>
+            <li>• Use the <Link to="/legal-notice" className="underline underline-offset-2">Legal Notice Generator</Link> if you need a formal notice.</li>
+            <li>• Anonymous posting hides your name publicly, but your account is still used for moderation.</li>
+          </ul>
+        </div>
+      </Card>
+
+      <EvidenceTierGuide />
 
       <ProtectedAction>
         <Card>
@@ -246,6 +293,51 @@ export function ReportPage() {
               required
             />
             <p className="text-xs text-text-muted">{form.description.length}/5000 characters</p>
+
+            <Select
+              label="Evidence Level"
+              options={evidenceTierOptions}
+              value={form.evidenceTier}
+              onChange={e => updateField('evidenceTier', e.target.value)}
+              required
+            />
+
+            <Textarea
+              label="Evidence Notes (optional)"
+              placeholder="Example: photos uploaded, mold lab kit pending, city inspector visited on March 1."
+              value={form.evidenceDetails}
+              onChange={e => updateField('evidenceDetails', e.target.value)}
+              maxLength={500}
+            />
+            <p className="text-xs text-text-muted">{form.evidenceDetails.length}/500 characters</p>
+
+            <Input
+              label="When did this issue start?"
+              type="date"
+              value={form.dateOccurred}
+              onChange={e => updateField('dateOccurred', e.target.value)}
+            />
+
+            <div className="space-y-3 rounded-md border border-border p-4">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={form.landlordNotified}
+                  onChange={e => updateField('landlordNotified', e.target.checked)}
+                  className="h-4 w-4 rounded border-border text-sage-600 focus:ring-sage-500"
+                />
+                <span className="text-sm text-text">I have already notified my landlord about this issue</span>
+              </label>
+
+              {form.landlordNotified && (
+                <Input
+                  label="Date landlord was notified"
+                  type="date"
+                  value={form.dateNotified}
+                  onChange={e => updateField('dateNotified', e.target.value)}
+                />
+              )}
+            </div>
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-text">
