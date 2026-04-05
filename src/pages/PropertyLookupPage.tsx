@@ -205,10 +205,10 @@ export function PropertyLookupPage() {
                   key={tab.key}
                   type="button"
                   onClick={() => setActiveTab(tab.key)}
-                  className={`px-5 py-3 text-sm font-medium transition-colors duration-200 border-b-2 -mb-px ${
+                  className={`px-5 py-3 text-xl font-semibold transition-colors duration-200 border-b-2 -mb-px ${
                     activeTab === tab.key
                       ? 'border-sage-600 text-sage-700'
-                      : 'border-transparent text-text-muted hover:text-text hover:border-sage-200'
+                      : 'border-transparent text-text hover:text-sage-700 hover:border-sage-200'
                   }`}
                 >
                   {tab.label}
