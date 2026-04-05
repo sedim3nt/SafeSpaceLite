@@ -289,6 +289,7 @@ export function ReportPage() {
               <AddressAutocomplete
                 initialValue={form.address}
                 onChangeQuery={(value) => updateField('address', value)}
+                autoSubmitOnSelect
                 onSelect={(address) => {
                   updateField('address', address);
                   setAddressError('');
@@ -296,9 +297,8 @@ export function ReportPage() {
                 onSubmit={handleAddressLookup}
                 searching={addressSearching}
                 error={addressError}
-                submitLabel="Use This Address"
-                searchingLabel="Validating..."
                 placeholder="Start typing the property address..."
+                showSubmitButton={false}
               />
             </div>
 

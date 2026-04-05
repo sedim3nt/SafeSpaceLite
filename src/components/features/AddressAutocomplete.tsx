@@ -65,12 +65,14 @@ interface AddressAutocompleteProps {
   onSelect: (address: string) => void;
   onSubmit: (address: string) => void;
   onChangeQuery?: (address: string) => void;
+  autoSubmitOnSelect?: boolean;
   searching?: boolean;
   error?: string;
   submitLabel?: string;
   searchingLabel?: string;
   placeholder?: string;
   initialValue?: string;
+  showSubmitButton?: boolean;
 }
 
 const GOOGLE_PLACES_KEY = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
@@ -108,12 +110,14 @@ export function AddressAutocomplete({
   onSelect,
   onSubmit,
   onChangeQuery,
+  autoSubmitOnSelect = false,
   searching,
   error,
   submitLabel = 'Check Rights',
   searchingLabel = 'Searching...',
   placeholder = 'Start typing your address...',
   initialValue = '',
+  showSubmitButton = true,
 }: AddressAutocompleteProps) {
   const [query, setQuery] = useState(initialValue);
   const [predictions, setPredictions] = useState<GooglePrediction[]>([]);
@@ -206,12 +210,9 @@ export function AddressAutocomplete({
     setShowDropdown(false);
     onChangeQuery?.(addr);
     onSelect(addr);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const addr = selectedAddress || query;
-    if (addr.trim()) onSubmit(addr.trim());
+    if (autoSubmitOnSelect) {
+      onSubmit(addr);
+    }
   };
 
   return (
@@ -219,7 +220,7 @@ export function AddressAutocomplete({
       {/* Hidden div required by PlacesService */}
       <div ref={dummyRef} style={{ display: 'none' }} />
 
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <div className="space-y-3">
         <div className="flex flex-col gap-2 sm:flex-row">
           <div className="flex-1 relative">
             <Input
@@ -227,6 +228,11 @@ export function AddressAutocomplete({
               value={query}
               onChange={(e) => handleInput(e.target.value)}
               onFocus={() => predictions.length > 0 && setShowDropdown(true)}
+              onKeyDown={(e) => {
+                if (!showSubmitButton && e.key === 'Enter') {
+                  e.preventDefault();
+                }
+              }}
               aria-label="Street address"
               autoComplete="off"
             />
@@ -260,9 +266,14 @@ export function AddressAutocomplete({
               </ul>
             )}
           </div>
-          <Button type="submit" disabled={!query.trim() || searching}>
-            {searching ? searchingLabel : submitLabel}
-          </Button>
+          {showSubmitButton && (
+            <Button type="button" onClick={() => {
+              const addr = selectedAddress || query;
+              if (addr.trim()) onSubmit(addr.trim());
+            }} disabled={!query.trim() || searching}>
+              {searching ? searchingLabel : submitLabel}
+            </Button>
+          )}
         </div>
         {error && <p className="text-sm text-danger">{error}</p>}
         {autocompleteMessage && (
@@ -271,7 +282,7 @@ export function AddressAutocomplete({
         {!mapsReady && GOOGLE_PLACES_KEY && !autocompleteMessage && (
           <p className="text-sm text-text-muted">Loading live address suggestions...</p>
         )}
-      </form>
+      </div>
     </div>
   );
 }

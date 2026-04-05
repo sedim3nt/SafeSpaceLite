@@ -237,6 +237,7 @@ export function LegalNoticePage() {
             <AddressAutocomplete
               initialValue={form.address}
               onChangeQuery={(value) => updateField('address', value)}
+              autoSubmitOnSelect
               onSelect={() => {
                 setAddressError('');
                 setAddressHelp('');
@@ -244,9 +245,8 @@ export function LegalNoticePage() {
               onSubmit={handleAddressSubmit}
               searching={searchingAddress}
               error={addressError}
-              submitLabel="Use This Address"
-              searchingLabel="Validating..."
               placeholder="Start typing the rental address..."
+              showSubmitButton={false}
             />
             {addressHelp && (
               <p className="text-sm text-sage-700">{addressHelp}</p>
