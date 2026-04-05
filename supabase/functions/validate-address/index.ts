@@ -63,7 +63,10 @@ async function validateWithGoogle(input: {
   state?: string;
   zipCode?: string;
 }) {
-  const apiKey = Deno.env.get("GOOGLE_ADDRESS_VALIDATION_API_KEY") || Deno.env.get("GOOGLE_MAPS_API_KEY");
+  const apiKey =
+    Deno.env.get("GOOGLE_ADDRESS_VALIDATION_SERVER_KEY") ||
+    Deno.env.get("GOOGLE_ADDRESS_VALIDATION_API_KEY") ||
+    Deno.env.get("GOOGLE_MAPS_API_KEY");
   if (!apiKey) {
     throw new Error("Google Address Validation API key not configured");
   }
