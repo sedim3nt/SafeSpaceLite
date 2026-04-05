@@ -109,7 +109,7 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0 }: LandlordScor
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
+      <div className="space-y-2 pt-4">
         <h3 className="text-xl font-semibold text-text">Rental Experience</h3>
         <p className="text-sm text-text-muted">
           Review patterns, landlord responses, and renter-reported experience for this property.
@@ -169,7 +169,7 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0 }: LandlordScor
 
       {/* Tag frequency */}
       {sortedTags.length > 0 && (
-        <div>
+        <div className="pt-4">
           <h3 className="mb-3 text-xl font-semibold text-text">Common Themes</h3>
           <div className="flex flex-wrap gap-2">
             {sortedTags.slice(0, 10).map(([tag, count]) => (
@@ -186,7 +186,7 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0 }: LandlordScor
       )}
 
       {/* Recent reviews */}
-      <div className="space-y-3">
+      <div className="space-y-3 pt-4">
         <h3 className="text-xl font-semibold text-text">Recent Reviews</h3>
         {reviews.map((review) => {
           const badge = RELATIONSHIP_BADGES[review.relationship_type] || { icon: '', label: '' };
