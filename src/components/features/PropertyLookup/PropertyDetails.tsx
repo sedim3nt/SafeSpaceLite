@@ -63,7 +63,7 @@ export function PropertyDetails({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight text-ink">{address}</h2>
+        <h3 className="text-xl font-semibold text-text">{address}</h3>
         <div className="mt-2 flex gap-4 text-sm text-text-muted">
           <span>{reports.length} report{reports.length !== 1 ? 's' : ''}</span>
           <span>{comments.length} comment{comments.length !== 1 ? 's' : ''}</span>

@@ -114,7 +114,7 @@ export function LandlordScoreCard({ propertyId, refreshToken = 0 }: LandlordScor
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight text-ink">Landlord Reviews</h2>
+        <h3 className="text-xl font-semibold text-text">Rental Experience</h3>
         <p className="text-sm text-text-muted">
           Review patterns, landlord responses, and renter-reported experience for this property.
         </p>
