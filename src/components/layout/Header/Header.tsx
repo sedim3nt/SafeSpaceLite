@@ -24,28 +24,28 @@ export function Header() {
             </div>
 
             <div className="hidden md:block">
-              {user ? (
-                <div className="flex items-center gap-3">
-                  <Link to="/property-owners">
-                    <Button variant="secondary" size="sm" className="bg-white text-text hover:bg-surface-muted">
-                      For Property Owners
-                    </Button>
-                  </Link>
+              <div className="flex items-center gap-3">
+                <Link to="/landlords">
+                  <Button variant="secondary" size="sm" className="bg-white text-text hover:bg-surface-muted">
+                    For Landlords
+                  </Button>
+                </Link>
+                {user ? (
                   <button
                     onClick={() => signOut()}
                     className="rounded-md px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-muted hover:text-text"
                   >
                     Sign out
                   </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowAuth(true)}
-                  className="rounded-md bg-sage-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sage-700"
-                >
-                  Sign in
-                </button>
-              )}
+                ) : (
+                  <button
+                    onClick={() => setShowAuth(true)}
+                    className="rounded-md bg-sage-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sage-700"
+                  >
+                    Sign in
+                  </button>
+                )}
+              </div>
             </div>
 
             <button
@@ -73,12 +73,12 @@ export function Header() {
               <Navigation mobile onNavigate={() => setIsMobileMenuOpen(false)} />
               <div className="mt-4 border-t border-border pt-4">
                 <Link
-                  to="/property-owners"
+                  to="/landlords"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="mb-3 block"
                 >
                   <Button variant="secondary" className="w-full bg-white text-text hover:bg-surface-muted">
-                    For Property Owners
+                    For Landlords
                   </Button>
                 </Link>
                 {user ? (

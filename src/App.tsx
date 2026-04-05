@@ -28,6 +28,7 @@ function App() {
           <Route path="/emergency-guide" element={<EmergencyGuidePage />} />
           <Route path="/property-lookup" element={<PropertyLookupPage />} />
           <Route path="/property/:propertyId" element={<PropertyLookupPage />} />
+          <Route path="/landlords" element={<PropertyOwnersPage />} />
           <Route path="/property-owners" element={<PropertyOwnersPage />} />
           <Route path="/report" element={<ReportPage />} />
           <Route path="/tracker" element={<TrackerPage />} />

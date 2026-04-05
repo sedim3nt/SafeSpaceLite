@@ -8,7 +8,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import type { Landlord } from '../../../types/database';
 
 const RELATIONSHIP_TYPES = [
-  { value: 'property_owner', label: 'Property Owner', desc: "Owns it, doesn't live there", icon: '🏠' },
+  { value: 'property_owner', label: 'Landlord', desc: "Owns it, doesn't live there", icon: '🏠' },
   { value: 'management_company', label: 'Management Company', desc: 'Professional firm manages property', icon: '🏢' },
   { value: 'master_tenant', label: 'Master Tenant / Roommate', desc: 'They hold the lease, you sublet or were added', icon: '🔑' },
   { value: 'owner_occupant', label: 'Owner-Occupant', desc: 'Owns it, lives there, rents you a room', icon: '🏡' },

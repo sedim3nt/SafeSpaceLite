@@ -74,7 +74,7 @@ function generatePDF(data: {
   addText(`From: ${data.tenantName}`, 11, false);
   y += 5;
 
-  addText('Dear Property Owner/Manager,', 11, false, 8);
+  addText('Dear Landlord/Manager,', 11, false, 8);
   y += 3;
 
   addText(

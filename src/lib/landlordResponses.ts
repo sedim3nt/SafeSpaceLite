@@ -1,3 +1,5 @@
+import { supabase } from './supabase';
+
 export type LandlordResponseType = 'report' | 'review';
 
 export interface PendingLandlordResponse {
@@ -13,15 +15,13 @@ const PENDING_RESPONSE_KEY = 'pending_landlord_response';
 
 function getSupabaseFunctionUrl() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY environment variables');
+  if (!supabaseUrl) {
+    throw new Error('Missing VITE_SUPABASE_URL environment variable');
   }
 
   return {
     url: `${supabaseUrl}/functions/v1/landlord-response`,
-    anonKey: supabaseAnonKey,
   };
 }
 
@@ -42,7 +42,13 @@ export function clearPendingLandlordResponse() {
 }
 
 export async function startLandlordResponseCheckout(payload: PendingLandlordResponse) {
-  const { url, anonKey } = getSupabaseFunctionUrl();
+  const { url } = getSupabaseFunctionUrl();
+  const { data: { session } } = await supabase.auth.getSession();
+  const accessToken = session?.access_token;
+
+  if (!accessToken) {
+    throw new Error('Sign in as a landlord before submitting a response.');
+  }
 
   sessionStorage.setItem(PENDING_RESPONSE_KEY, JSON.stringify(payload));
 
@@ -50,7 +56,7 @@ export async function startLandlordResponseCheckout(payload: PendingLandlordResp
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${anonKey}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
       action: 'create-checkout',
@@ -83,12 +89,19 @@ export async function finalizePendingLandlordResponse(sessionId: string) {
     throw new Error('No pending landlord response was found for this browser session.');
   }
 
-  const { url, anonKey } = getSupabaseFunctionUrl();
+  const { url } = getSupabaseFunctionUrl();
+  const { data: { session } } = await supabase.auth.getSession();
+  const accessToken = session?.access_token;
+
+  if (!accessToken) {
+    throw new Error('Sign in again to finish publishing this landlord response.');
+  }
+
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${anonKey}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
       action: 'finalize',

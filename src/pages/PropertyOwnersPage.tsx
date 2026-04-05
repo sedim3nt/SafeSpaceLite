@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '../components/common/Button/Button';
 
-const ownerBenefits = [
+const landlordBenefits = [
   {
     title: 'Check the public record on any property',
     body: 'Use Property Lookup to see health and safety reports, community comments, and rental reviews tied to an address before a concern turns into a larger reputation problem.',
@@ -27,9 +27,9 @@ export function PropertyOwnersPage() {
   return (
     <div className="space-y-10">
       <div className="max-w-4xl space-y-4">
-        <h1 className="text-3xl font-bold text-text">For Property Owners</h1>
+        <h1 className="text-3xl font-bold text-text">For Landlords</h1>
         <p className="text-lg text-text-muted">
-          SafeSpace gives owners and managers a clear way to monitor public property records, respond to tenant concerns,
+          SafeSpace gives landlords and managers a clear way to monitor public property records, respond to tenant concerns,
           and present improvements directly on the address page renters already use.
         </p>
       </div>
@@ -46,7 +46,7 @@ export function PropertyOwnersPage() {
           </div>
 
           <div className="mt-8 grid gap-5 md:grid-cols-3">
-            {ownerBenefits.map((benefit) => (
+            {landlordBenefits.map((benefit) => (
               <div key={benefit.title} className="rounded-xl border border-border bg-surface p-5">
                 <h3 className="text-xl font-semibold text-text">{benefit.title}</h3>
                 <p className="mt-3 text-base text-text-muted">{benefit.body}</p>
@@ -60,7 +60,8 @@ export function PropertyOwnersPage() {
             <h2 className="text-xl font-semibold text-text">$10 public response</h2>
             <p className="text-base text-text-muted">
               A response is a simple, professional way to protect your reputation. For $10, you can publish one public
-              reply on a review or safety report from the property page.
+              reply on a review or safety report from the property page. Landlord responses require a signed-in account
+              before checkout, so the response is tied to an authenticated landlord session rather than an anonymous email.
             </p>
           </div>
 
@@ -81,10 +82,10 @@ export function PropertyOwnersPage() {
           <p className="text-base text-text-muted">
             Start with the address. From the property result page, review public safety reports and tenant reviews. If you
             disagree with a claim or want to highlight improvements, use the response action on that page to add a public
-            owner statement. SafeSpace keeps that response attached to the record renters are already reading.
+            landlord statement. SafeSpace keeps that response attached to the record renters are already reading.
           </p>
           <p className="text-base text-text-muted">
-            This gives responsible owners a constructive option: respond to negative feedback with facts, or promote
+            This gives responsible landlords a constructive option: respond to negative feedback with facts, or promote
             completed work and positive property strengths where prospective renters can actually see them.
           </p>
         </div>

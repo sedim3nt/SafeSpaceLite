@@ -11,7 +11,7 @@ import type {
 import { LandlordResponseForm } from '../LandlordResponses/LandlordResponseForm';
 
 const RELATIONSHIP_BADGES: Record<string, { icon: string; label: string }> = {
-  property_owner: { icon: '🏠', label: 'Property Owner' },
+  property_owner: { icon: '🏠', label: 'Landlord' },
   management_company: { icon: '🏢', label: 'Management' },
   master_tenant: { icon: '🔑', label: 'Master Tenant' },
   owner_occupant: { icon: '🏡', label: 'Owner-Occupant' },

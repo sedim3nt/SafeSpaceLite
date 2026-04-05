@@ -34,6 +34,11 @@ interface FinalizePayload {
   body: string;
 }
 
+interface AuthenticatedActor {
+  id: string;
+  email: string;
+}
+
 function getStripeSecretKey() {
   const secret = Deno.env.get("STRIPE_SECRET_KEY");
   if (!secret) throw new Error("STRIPE_SECRET_KEY is not configured");
@@ -60,6 +65,27 @@ function getSupabaseAdmin() {
   });
 }
 
+async function getAuthenticatedActor(request: Request): Promise<AuthenticatedActor> {
+  const authHeader = request.headers.get("Authorization");
+  const token = authHeader?.replace(/^Bearer\s+/i, "").trim();
+
+  if (!token) {
+    throw new Error("Sign in as a landlord before submitting a response");
+  }
+
+  const admin = getSupabaseAdmin();
+  const { data, error } = await admin.auth.getUser(token);
+
+  if (error || !data.user?.email) {
+    throw new Error("SafeSpace could not verify the signed-in landlord account");
+  }
+
+  return {
+    id: data.user.id,
+    email: data.user.email,
+  };
+}
+
 async function stripeRequest(path: string, method = "POST", params?: URLSearchParams) {
   const secret = getStripeSecretKey();
   const response = await fetch(`${STRIPE_API_BASE}${path}`, {
@@ -79,7 +105,12 @@ async function stripeRequest(path: string, method = "POST", params?: URLSearchPa
   return data;
 }
 
-async function createCheckoutSession(payload: CreateCheckoutPayload) {
+async function createCheckoutSession(payload: CreateCheckoutPayload, actor: AuthenticatedActor) {
+  const expectedEmail = normalizeEmail(payload.landlordEmail);
+  if (!expectedEmail || expectedEmail !== normalizeEmail(actor.email)) {
+    throw new Error("Checkout email must match the signed-in landlord account");
+  }
+
   const params = new URLSearchParams();
   params.set("mode", "payment");
   params.set("success_url", payload.successUrl);
@@ -93,6 +124,7 @@ async function createCheckoutSession(payload: CreateCheckoutPayload) {
   if (payload.landlordId) {
     params.set("metadata[landlord_id]", payload.landlordId);
   }
+  params.set("metadata[auth_user_id]", actor.id);
 
   return stripeRequest("/checkout/sessions", "POST", params);
 }
@@ -105,7 +137,7 @@ function normalizeEmail(value: string | null | undefined) {
   return (value || "").trim().toLowerCase();
 }
 
-async function finalizePaidResponse(payload: FinalizePayload) {
+async function finalizePaidResponse(payload: FinalizePayload, actor: AuthenticatedActor) {
   const session = await retrieveCheckoutSession(payload.sessionId);
   if (session.payment_status !== "paid") {
     throw new Error("Stripe session has not been paid");
@@ -121,11 +153,17 @@ async function finalizePaidResponse(payload: FinalizePayload) {
   if (payload.responseType === "review" && payload.landlordId && metadata.landlord_id !== payload.landlordId) {
     throw new Error("Stripe session landlord ID did not match the pending response");
   }
+  if (metadata.auth_user_id !== actor.id) {
+    throw new Error("This landlord response does not match the signed-in account");
+  }
 
   const sessionEmail = normalizeEmail(session.customer_details?.email || session.customer_email);
   const expectedEmail = normalizeEmail(payload.landlordEmail);
   if (sessionEmail && expectedEmail && sessionEmail !== expectedEmail) {
     throw new Error("Stripe session email did not match the landlord response email");
+  }
+  if (expectedEmail !== normalizeEmail(actor.email)) {
+    throw new Error("Signed-in landlord email did not match the saved response");
   }
 
   const admin = getSupabaseAdmin();
@@ -139,6 +177,7 @@ async function finalizePaidResponse(payload: FinalizePayload) {
           report_id: payload.targetId,
           property_id: payload.propertyId,
           landlord_email: expectedEmail || payload.landlordEmail,
+          is_verified: true,
           body: payload.body.trim(),
           stripe_payment_id: stripePaymentId,
         },
@@ -163,6 +202,7 @@ async function finalizePaidResponse(payload: FinalizePayload) {
         property_id: payload.propertyId,
         landlord_id: payload.landlordId,
         landlord_email: expectedEmail || payload.landlordEmail,
+        is_verified: true,
         body: payload.body.trim(),
         stripe_payment_id: stripePaymentId,
       },
@@ -182,9 +222,10 @@ Deno.serve(async (request) => {
 
   try {
     const payload = await request.json();
+    const actor = await getAuthenticatedActor(request);
 
     if (payload.action === "create-checkout") {
-      const session = await createCheckoutSession(payload as CreateCheckoutPayload);
+      const session = await createCheckoutSession(payload as CreateCheckoutPayload, actor);
       return new Response(
         JSON.stringify({
           checkoutUrl: session.url,
@@ -200,7 +241,7 @@ Deno.serve(async (request) => {
     }
 
     if (payload.action === "finalize") {
-      const record = await finalizePaidResponse(payload as FinalizePayload);
+      const record = await finalizePaidResponse(payload as FinalizePayload, actor);
       return new Response(JSON.stringify({ success: true, record }), {
         headers: {
           ...CORS_HEADERS,
