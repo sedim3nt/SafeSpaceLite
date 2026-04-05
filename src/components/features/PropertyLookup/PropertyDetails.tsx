@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Card } from '../../common';
-import type { Report, Comment as DbComment, Rebuttal } from '../../../types/database';
+import type { Report, Rebuttal } from '../../../types/database';
 import { LandlordResponseForm } from '../LandlordResponses/LandlordResponseForm';
 
 interface PropertyDetailsProps {
   propertyId: string;
   address: string;
   reports: Report[];
-  comments: DbComment[];
   rebuttals: Rebuttal[];
 }
 
@@ -35,7 +34,6 @@ export function PropertyDetails({
   propertyId,
   address,
   reports,
-  comments,
   rebuttals,
 }: PropertyDetailsProps) {
   const [openResponseFor, setOpenResponseFor] = useState<string | null>(null);
@@ -66,7 +64,6 @@ export function PropertyDetails({
         <h3 className="text-xl font-semibold text-text">{address}</h3>
         <div className="mt-2 flex gap-4 text-sm text-text-muted">
           <span>{reports.length} report{reports.length !== 1 ? 's' : ''}</span>
-          <span>{comments.length} comment{comments.length !== 1 ? 's' : ''}</span>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           <Link to={`/report?address=${encodeURIComponent(address)}`}>

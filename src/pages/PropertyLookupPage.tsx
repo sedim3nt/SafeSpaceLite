@@ -2,14 +2,13 @@ import { useState, useCallback, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { PropertySearch } from '../components/features/PropertyLookup/PropertySearch';
 import { PropertyDetails } from '../components/features/PropertyLookup/PropertyDetails';
-import { CommunityComments } from '../components/features/PropertyLookup/CommunityComments';
 import { LandlordScoreCard } from '../components/features/RentalReview/LandlordScoreCard';
 import { JurisdictionLayers } from '../components/features/Jurisdictions/JurisdictionLayers';
 import { supabase } from '../lib/supabase';
 import { ensureProperty, type AddressValidationResult } from '../lib/addressValidation';
 import { finalizePendingLandlordResponse } from '../lib/landlordResponses';
 import { resolveJurisdictionLayers, type JurisdictionResolution } from '../data/jurisdictions';
-import type { Report, Comment as DbComment, Rebuttal, Property } from '../types/database';
+import type { Report, Rebuttal, Property } from '../types/database';
 
 type Tab = 'health' | 'rental';
 
@@ -19,7 +18,6 @@ export function PropertyLookupPage() {
   const [searchedAddress, setSearchedAddress] = useState('');
   const [property, setProperty] = useState<Property | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
-  const [comments, setComments] = useState<DbComment[]>([]);
   const [rebuttals, setRebuttals] = useState<Rebuttal[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -42,7 +40,6 @@ export function PropertyLookupPage() {
     if (!prop) {
       setProperty(null);
       setReports([]);
-      setComments([]);
       setRebuttals([]);
       return;
     }
@@ -58,14 +55,12 @@ export function PropertyLookupPage() {
       }),
     );
 
-    const [reportsRes, commentsRes, rebuttalsRes] = await Promise.all([
+    const [reportsRes, rebuttalsRes] = await Promise.all([
       supabase.from('reports').select('*').eq('property_id', prop.id).order('created_at', { ascending: false }),
-      supabase.from('comments').select('*').eq('property_id', prop.id).order('created_at', { ascending: false }),
       supabase.from('rebuttals').select('*').eq('property_id', prop.id),
     ]);
 
     setReports(reportsRes.data || []);
-    setComments(commentsRes.data || []);
     setRebuttals(rebuttalsRes.data || []);
   }, []);
 
@@ -140,13 +135,6 @@ export function PropertyLookupPage() {
     const prop = await ensureProperty(result);
     await fetchPropertyData(prop.id, prop);
     setLoading(false);
-  };
-
-  const handleRefresh = () => {
-    if (property) {
-      fetchPropertyData(property.id);
-      setReviewRefreshToken((current) => current + 1);
-    }
   };
 
   const tabs: { key: Tab; label: string }[] = [
@@ -225,17 +213,8 @@ export function PropertyLookupPage() {
                 propertyId={property.id}
                 address={property.address_normalized}
                 reports={reports}
-                comments={comments}
                 rebuttals={rebuttals}
               />
-
-              <div className="border-t border-border pt-8">
-                <CommunityComments
-                  propertyId={property.id}
-                  comments={comments}
-                  onCommentAdded={handleRefresh}
-                />
-              </div>
             </>
           )}
 
