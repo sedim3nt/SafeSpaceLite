@@ -254,7 +254,7 @@ export function PropertyLookupPage() {
         </div>
       )}
 
-      {searched && jurisdictions && (
+      {searched && !loading && jurisdictions && (
         <JurisdictionLayers
           layers={jurisdictions.layers}
           title="What laws apply to this address?"
