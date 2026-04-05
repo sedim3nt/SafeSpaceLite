@@ -131,20 +131,19 @@ export function BoulderLandingPage() {
 
   return (
     <div className="space-y-12">
-      {/* Hero */}
-      <section className="text-center pt-6 pb-2">
-        <p className="text-sm font-medium uppercase tracking-widest text-sage-600 mb-3">
+      {/* Header */}
+      <section className="pt-6 pb-2">
+        <p className="mb-3 text-sm font-medium uppercase tracking-widest text-sage-600">
           SafeSpace × Boulder
         </p>
         <h1 className="text-4xl font-bold tracking-tight text-ink sm:text-5xl lg:text-6xl">
-          Boulder Renters:<br />
-          <span className="text-sage-600">You Have Rights</span>
+          Boulder Renters: <span className="text-sage-600">You Have Rights</span>
         </h1>
-        <p className="mx-auto mt-5 max-w-2xl text-lg text-text-muted leading-relaxed">
+        <p className="mt-5 max-w-3xl text-lg leading-relaxed text-text-muted">
           Whether you're a CU student in a University Hill rental or a long-term
           renter downtown, Colorado law protects you. Know what you're entitled to.
         </p>
-        <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <Link to="/review">
             <Button size="lg">Rate Your Rental</Button>
           </Link>

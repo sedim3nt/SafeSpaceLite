@@ -24,12 +24,12 @@ function ResearchCityPage({ city }: { city: ResearchCity }) {
 
   return (
     <div className="space-y-10">
-      {/* Hero */}
-      <section className="text-center pt-4">
+      {/* Header */}
+      <section className="pt-4">
         <h1 className="text-4xl font-bold tracking-tight text-ink sm:text-5xl">
           {city.city}, <span className="text-sage-600">{city.state}</span>
         </h1>
-        <p className="mx-auto mt-3 max-w-lg text-lg text-text-muted">
+        <p className="mt-3 max-w-2xl text-lg text-text-muted">
           {city.population > 0 ? `${city.population.toLocaleString()} residents` : ''}
         </p>
         <div className="mt-3">
@@ -188,12 +188,12 @@ export function CityPage() {
 
     return (
       <div className="space-y-10">
-        {/* Hero */}
-        <section className="text-center pt-4">
+        {/* Header */}
+        <section className="pt-4">
           <h1 className="text-4xl font-bold tracking-tight text-ink sm:text-5xl">
             {deepCity.name}, <span className="text-sage-600">{deepCity.stateCode}</span>
           </h1>
-          <p className="mx-auto mt-3 max-w-2xl text-lg text-text-muted">
+          <p className="mt-3 max-w-3xl text-lg text-text-muted">
             {deepCity.population.toLocaleString()} residents · {deepCity.renterPercent}% renters · {deepCity.university.name} ({deepCity.university.students.toLocaleString()} students)
           </p>
         </section>
