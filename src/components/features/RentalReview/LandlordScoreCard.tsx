@@ -43,15 +43,20 @@ function getBarColor(): string {
 interface LandlordScoreCardProps {
   propertyId: string;
   refreshToken?: number;
+  onLoadingChange?: (loading: boolean) => void;
 }
 
-export function LandlordScoreCard({ propertyId, refreshToken = 0 }: LandlordScoreCardProps) {
+export function LandlordScoreCard({ propertyId, refreshToken = 0, onLoadingChange }: LandlordScoreCardProps) {
   const [landlords, setLandlords] = useState<Landlord[]>([]);
   const [reviews, setReviews] = useState<RentalReview[]>([]);
   const [scores, setScores] = useState<LandlordScore[]>([]);
   const [reviewResponses, setReviewResponses] = useState<ReviewResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [openResponseFor, setOpenResponseFor] = useState<string | null>(null);
+
+  useEffect(() => {
+    onLoadingChange?.(loading);
+  }, [loading, onLoadingChange]);
 
   useEffect(() => {
     async function fetchData() {

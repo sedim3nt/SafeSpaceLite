@@ -25,6 +25,7 @@ export function PropertyLookupPage() {
   const [searched, setSearched] = useState(false);
   const [jurisdictions, setJurisdictions] = useState<JurisdictionResolution | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('health');
+  const [rentalTabLoading, setRentalTabLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'success' | 'cancelled' | 'error' | null>(null);
   const [paymentMessage, setPaymentMessage] = useState('');
   const [reviewRefreshToken, setReviewRefreshToken] = useState(0);
@@ -205,7 +206,7 @@ export function PropertyLookupPage() {
                   key={tab.key}
                   type="button"
                   onClick={() => setActiveTab(tab.key)}
-                  className={`px-5 py-3 text-xl font-semibold transition-colors duration-200 border-b-2 -mb-px ${
+                  className={`px-5 py-3 text-xl font-semibold transition-colors duration-200 border-b-2 -mb-px font-[var(--font-display)] ${
                     activeTab === tab.key
                       ? 'border-sage-600 text-sage-700'
                       : 'border-transparent text-text hover:text-sage-700 hover:border-sage-200'
@@ -240,7 +241,11 @@ export function PropertyLookupPage() {
 
           {/* Rental Experience tab */}
           {activeTab === 'rental' && (
-            <LandlordScoreCard propertyId={property.id} refreshToken={reviewRefreshToken} />
+            <LandlordScoreCard
+              propertyId={property.id}
+              refreshToken={reviewRefreshToken}
+              onLoadingChange={setRentalTabLoading}
+            />
           )}
         </>
       )}
@@ -254,7 +259,7 @@ export function PropertyLookupPage() {
         </div>
       )}
 
-      {searched && !loading && jurisdictions && (
+      {searched && !loading && jurisdictions && !(activeTab === 'rental' && rentalTabLoading) && (
         <div className="border-t border-border pt-10">
           <JurisdictionLayers
             layers={jurisdictions.layers}
@@ -264,7 +269,7 @@ export function PropertyLookupPage() {
         </div>
       )}
 
-      {searched && (
+      {searched && !(activeTab === 'rental' && rentalTabLoading) && (
         <div className="rounded-xl bg-surface-muted p-6">
           <p className="text-sm text-text-muted">
             <strong>Note:</strong> This information is compiled from community reports. Always conduct your own inspection and due diligence before renting.
