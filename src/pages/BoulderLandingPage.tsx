@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, Button } from '../components/common';
 import { getCityBySlug } from '../data/cityRegistry';
-import { boulderSeedReviews } from '../data/boulderSeedReviews';
 import { CityRightsAccordion } from '../components/features/Rights/CityRightsAccordion';
 import { CityEmergencyContacts } from '../components/features/EmergencyGuide/CityEmergencyContacts';
 
@@ -103,14 +102,6 @@ const BOULDER_STATS = {
   medianRent: '$1,850/mo',
   medianRentSource: '1BR, 2024 estimates',
 };
-
-function getGrade(score: number): { grade: string; color: string } {
-  if (score >= 4.5) return { grade: 'A', color: 'text-green-700 bg-green-100' };
-  if (score >= 3.5) return { grade: 'B', color: 'text-lime-700 bg-lime-100' };
-  if (score >= 2.5) return { grade: 'C', color: 'text-yellow-700 bg-yellow-100' };
-  if (score >= 1.5) return { grade: 'D', color: 'text-orange-700 bg-orange-100' };
-  return { grade: 'F', color: 'text-red-700 bg-red-100' };
-}
 
 export function BoulderLandingPage() {
   const city = getCityBySlug('boulder');
@@ -257,41 +248,27 @@ export function BoulderLandingPage() {
         </Card>
       </section>
 
-      {/* Recent Reviews Preview */}
+      {/* Review CTA */}
       <section>
         <h2 className="text-2xl sm:text-3xl font-bold text-ink text-center mb-2">
-          What Boulder Renters Are Saying
+          Add a Boulder Review
         </h2>
         <p className="text-center text-text-muted mb-8 max-w-xl mx-auto">
-          Real experiences from renters across Boulder neighborhoods.
+          SafeSpace no longer displays seeded example reviews. Add a real landlord review to help future Boulder renters research safely.
         </p>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {boulderSeedReviews.slice(0, 6).map((review, i) => {
-            const avg = Object.values(review.ratings).reduce((a, b) => a + b, 0) / 7;
-            const { grade, color } = getGrade(avg);
-            return (
-              <Card key={i} className="space-y-3">
-                <div className="flex items-start justify-between">
-                  <div className="min-w-0">
-                    <p className="font-semibold text-ink text-sm truncate">{review.managementCompany}</p>
-                    <p className="text-xs text-text-muted">{review.area}</p>
-                  </div>
-                  <span className={`flex-shrink-0 inline-flex items-center justify-center w-8 h-8 rounded text-sm font-bold ${color}`}>
-                    {grade}
-                  </span>
-                </div>
-                <p className="text-sm text-text leading-relaxed line-clamp-3">{review.comment}</p>
-                {review.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {review.tags.slice(0, 3).map((tag) => (
-                      <span key={tag} className="px-2 py-0.5 rounded-full bg-sage-50 text-sage-600 text-xs">{tag}</span>
-                    ))}
-                  </div>
-                )}
-              </Card>
-            );
-          })}
-        </div>
+        <Card className="mx-auto max-w-2xl text-center">
+          <p className="text-sm text-text-muted">
+            Submit a landlord review, safety issue, or legal notice from a real rental address to start building Boulder’s live public record.
+          </p>
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link to="/review">
+              <Button>Leave a Review</Button>
+            </Link>
+            <Link to="/report">
+              <Button variant="secondary">Report Safety Issue</Button>
+            </Link>
+          </div>
+        </Card>
         <div className="text-center mt-6">
           <Link to="/review">
             <Button variant="secondary">Add Your Review</Button>

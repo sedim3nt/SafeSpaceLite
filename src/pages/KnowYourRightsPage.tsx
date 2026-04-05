@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { RightsAccordion } from '../components/features/Rights/RightsAccordion';
 import { CityRightsAccordion } from '../components/features/Rights/CityRightsAccordion';
-import { SuccessStories } from '../components/features/Rights/SuccessStories';
 import { Card, Select } from '../components/common';
 import { getCityBySlug, getSupportedCities } from '../data/cityRegistry';
 import { getAllResearchCities, getResearchCity } from '../data/cityDatabase';
@@ -177,10 +176,6 @@ export const KnowYourRightsPage: React.FC = () => {
           </div>
         </>
       )}
-
-      <div className="border-t border-border pt-8">
-        <SuccessStories />
-      </div>
 
       <div className="bg-bamboo-50 border border-bamboo-200 rounded-md p-4">
         <p className="text-sm text-bamboo-800">
