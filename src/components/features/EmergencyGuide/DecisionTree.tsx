@@ -84,7 +84,7 @@ export const DecisionTree: React.FC<DecisionTreeProps> = ({ legalNoticeHref = '/
           </Button>
           <Button onClick={reset}>Start Over</Button>
           <Link to={legalNoticeHref}>
-            <Button variant="primary">Generate Legal Notice</Button>
+            <Button variant="secondary">Generate Legal Notice</Button>
           </Link>
         </div>
       </div>
