@@ -30,11 +30,11 @@ export function PropertyLookupPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [jurisdictions, setJurisdictions] = useState<JurisdictionResolution | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>(() => getTabFromParams(searchParams));
   const [rentalTabLoading, setRentalTabLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'success' | 'cancelled' | 'error' | null>(null);
   const [paymentMessage, setPaymentMessage] = useState('');
   const [reviewRefreshToken, setReviewRefreshToken] = useState(0);
+  const activeTab = getTabFromParams(searchParams);
 
   const fetchPropertyData = useCallback(async (propertyId: string, existingProperty?: Property) => {
     const prop = existingProperty || (
@@ -85,29 +85,6 @@ export function PropertyLookupPage() {
     fetchPropertyData(routePropertyId)
       .finally(() => setLoading(false));
   }, [routePropertyId, fetchPropertyData]);
-
-  useEffect(() => {
-    const requestedTab = getTabFromParams(searchParams);
-    if (requestedTab !== activeTab) {
-      setActiveTab(requestedTab);
-    }
-  }, [searchParams, activeTab]);
-
-  useEffect(() => {
-    if (!routePropertyId && !property) return;
-
-    const nextParams = new URLSearchParams(searchParams);
-
-    if (activeTab === 'health') {
-      nextParams.delete('tab');
-    } else {
-      nextParams.set('tab', activeTab);
-    }
-
-    if (nextParams.toString() !== searchParams.toString()) {
-      setSearchParams(nextParams, { replace: true });
-    }
-  }, [activeTab, routePropertyId, property, searchParams, setSearchParams]);
 
   useEffect(() => {
     const payment = searchParams.get('payment');
@@ -189,6 +166,18 @@ export function PropertyLookupPage() {
     { key: 'rental', label: 'Rental Experience' },
   ];
 
+  const handleTabChange = (nextTab: Tab) => {
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (nextTab === 'health') {
+      nextParams.delete('tab');
+    } else {
+      nextParams.set('tab', nextTab);
+    }
+
+    setSearchParams(nextParams, { replace: true });
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -240,7 +229,7 @@ export function PropertyLookupPage() {
                 <button
                   key={tab.key}
                   type="button"
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => handleTabChange(tab.key)}
                   className={`px-5 py-3 text-xl font-semibold transition-colors duration-200 border-b-2 -mb-px font-[var(--font-display)] ${
                     activeTab === tab.key
                       ? 'border-sage-600 text-sage-700'
