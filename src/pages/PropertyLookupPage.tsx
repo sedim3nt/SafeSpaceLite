@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { PropertySearch } from '../components/features/PropertyLookup/PropertySearch';
 import { PropertyDetails } from '../components/features/PropertyLookup/PropertyDetails';
 import { LandlordScoreCard } from '../components/features/RentalReview/LandlordScoreCard';
@@ -13,8 +13,13 @@ import type { PropertyLandlordStatement, Report, Rebuttal, Property } from '../t
 
 type Tab = 'health' | 'rental';
 
+function getTabFromParams(searchParams: URLSearchParams): Tab {
+  return searchParams.get('tab') === 'rental' ? 'rental' : 'health';
+}
+
 export function PropertyLookupPage() {
   const { propertyId: routePropertyId } = useParams<{ propertyId: string }>();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchedAddress, setSearchedAddress] = useState('');
   const [property, setProperty] = useState<Property | null>(null);
@@ -25,7 +30,7 @@ export function PropertyLookupPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [jurisdictions, setJurisdictions] = useState<JurisdictionResolution | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>('health');
+  const [activeTab, setActiveTab] = useState<Tab>(() => getTabFromParams(searchParams));
   const [rentalTabLoading, setRentalTabLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'success' | 'cancelled' | 'error' | null>(null);
   const [paymentMessage, setPaymentMessage] = useState('');
@@ -82,6 +87,29 @@ export function PropertyLookupPage() {
   }, [routePropertyId, fetchPropertyData]);
 
   useEffect(() => {
+    const requestedTab = getTabFromParams(searchParams);
+    if (requestedTab !== activeTab) {
+      setActiveTab(requestedTab);
+    }
+  }, [searchParams, activeTab]);
+
+  useEffect(() => {
+    if (!routePropertyId && !property) return;
+
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (activeTab === 'health') {
+      nextParams.delete('tab');
+    } else {
+      nextParams.set('tab', activeTab);
+    }
+
+    if (nextParams.toString() !== searchParams.toString()) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [activeTab, routePropertyId, property, searchParams, setSearchParams]);
+
+  useEffect(() => {
     const payment = searchParams.get('payment');
     const sessionId = searchParams.get('session_id');
     const propertyId = routePropertyId || searchParams.get('property') || undefined;
@@ -90,7 +118,9 @@ export function PropertyLookupPage() {
     if (payment === 'cancelled') {
       setPaymentStatus('cancelled');
       setPaymentMessage('Payment was cancelled. Your landlord response was not submitted.');
-      setSearchParams({});
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('payment');
+      setSearchParams(nextParams, { replace: true });
       return;
     }
 
@@ -124,7 +154,12 @@ export function PropertyLookupPage() {
         );
       } finally {
         if (!cancelled) {
-          setSearchParams({});
+          const nextParams = new URLSearchParams(searchParams);
+          nextParams.delete('payment');
+          nextParams.delete('session_id');
+          nextParams.delete('property');
+          nextParams.delete('type');
+          setSearchParams(nextParams, { replace: true });
         }
       }
     }
@@ -145,6 +180,7 @@ export function PropertyLookupPage() {
     // Ensure property exists so rental tab works even for new addresses
     const prop = await ensureProperty(result);
     await fetchPropertyData(prop.id, prop);
+    navigate(`/property/${prop.id}`, { replace: true });
     setLoading(false);
   };
 

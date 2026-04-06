@@ -1,7 +1,7 @@
-import { useState } from 'react';
 import { Card, Button } from '../../common';
 import type { PropertyLandlordStatement } from '../../../types/database';
 import { LandlordResponseForm } from './LandlordResponseForm';
+import { useSearchParams } from 'react-router-dom';
 
 interface PersistentLandlordPanelProps {
   propertyId: string;
@@ -30,8 +30,21 @@ export function PersistentLandlordPanel({
   hasReports,
   hasReviews,
 }: PersistentLandlordPanelProps) {
-  const [open, setOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const copy = getPanelCopy(hasReports, hasReviews);
+  const open = searchParams.get('compose') === 'landlord-note';
+
+  const setOpen = (nextOpen: boolean) => {
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (nextOpen) {
+      nextParams.set('compose', 'landlord-note');
+    } else {
+      nextParams.delete('compose');
+    }
+
+    setSearchParams(nextParams, { replace: true });
+  };
 
   return (
     <Card className="space-y-5 border-sage-200 bg-sage-50/60">
@@ -68,7 +81,7 @@ export function PersistentLandlordPanel({
             Sign in, confirm you represent the property, and complete the $10 checkout.
           </p>
         </div>
-        <Button size="sm" onClick={() => setOpen((current) => !current)}>
+        <Button size="sm" onClick={() => setOpen(!open)}>
           {open ? 'Close' : statement ? 'Update Landlord Note' : 'Add Landlord Note'}
         </Button>
       </div>
