@@ -28,8 +28,11 @@ const EVIDENCE_TIERS: Record<string, { label: string; style: string }> = {
   },
 };
 
-function isPdfEvidence(url: string) {
-  return url.toLowerCase().includes('.pdf');
+function getEvidenceKind(url: string) {
+  const lowerUrl = url.toLowerCase();
+  if (lowerUrl.includes('.pdf')) return 'pdf';
+  if (lowerUrl.includes('.docx')) return 'docx';
+  return 'image';
 }
 
 export function PropertyDetails({
@@ -167,14 +170,16 @@ export function PropertyDetails({
                       </div>
                       <div className="flex gap-3 overflow-x-auto pb-1">
                         {report.photo_urls.map((url, i) => (
-                          isPdfEvidence(url) ? (
+                          getEvidenceKind(url) !== 'image' ? (
                             <div
                               key={i}
                               className="flex w-48 shrink-0 flex-col rounded-lg border border-border bg-surface p-4"
                             >
                               <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-border bg-surface-muted text-center">
                                 <div className="space-y-1">
-                                  <p className="text-sm font-semibold uppercase tracking-wide text-danger">PDF</p>
+                                  <p className="text-sm font-semibold uppercase tracking-wide text-danger">
+                                    {getEvidenceKind(url).toUpperCase()}
+                                  </p>
                                   <p className="text-xs text-text-muted">Evidence {i + 1}</p>
                                 </div>
                               </div>
@@ -185,14 +190,14 @@ export function PropertyDetails({
                                   rel="noreferrer"
                                   className="inline-flex rounded-full bg-sage-50 px-2.5 py-1 text-xs font-medium text-sage-700"
                                 >
-                                  Open PDF
+                                  Open {getEvidenceKind(url).toUpperCase()}
                                 </a>
                                 <a
                                   href={url}
                                   download
                                   className="inline-flex rounded-full bg-surface-muted px-2.5 py-1 text-xs font-medium text-text"
                                 >
-                                  Download PDF
+                                  Download {getEvidenceKind(url).toUpperCase()}
                                 </a>
                               </div>
                             </div>

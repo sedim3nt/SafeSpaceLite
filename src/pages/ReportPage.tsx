@@ -34,13 +34,23 @@ function stripExif(file: File): Promise<Blob> {
 
 function getEvidenceExtension(file: File) {
   if (file.type === 'application/pdf') return 'pdf';
+  if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return 'docx';
   if (file.type === 'image/png') return 'png';
   if (file.type === 'image/webp') return 'webp';
   return 'jpg';
 }
 
-function isPdfFile(file: File) {
-  return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+function getEvidenceKind(file: File) {
+  const lowerName = file.name.toLowerCase();
+  if (file.type === 'application/pdf' || lowerName.endsWith('.pdf')) return 'pdf';
+  if (
+    file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    lowerName.endsWith('.docx')
+  ) {
+    return 'docx';
+  }
+  if (file.type.startsWith('image/')) return 'image';
+  return 'unknown';
 }
 
 const issueTypes = [
@@ -155,8 +165,8 @@ export function ReportPage() {
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const valid = files.filter((file) => {
-      const isAcceptedType = file.type.startsWith('image/') || isPdfFile(file);
-      return file.size <= 5 * 1024 * 1024 && isAcceptedType;
+      const evidenceKind = getEvidenceKind(file);
+      return file.size <= 5 * 1024 * 1024 && evidenceKind !== 'unknown';
     });
     setEvidenceFiles((prev) => [...prev, ...valid].slice(0, 4));
   };
@@ -219,11 +229,14 @@ export function ReportPage() {
       // Upload evidence files to Supabase Storage (EXIF stripped for images)
       const photoUrls: string[] = [];
       for (const file of evidenceFiles) {
-        const uploadBody = isPdfFile(file) ? file : await stripExif(file);
+        const evidenceKind = getEvidenceKind(file);
+        const uploadBody = evidenceKind === 'image' ? await stripExif(file) : file;
         const extension = getEvidenceExtension(file);
-        const contentType = isPdfFile(file)
+        const contentType = evidenceKind === 'pdf'
           ? 'application/pdf'
-          : file.type === 'image/png'
+          : evidenceKind === 'docx'
+            ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            : file.type === 'image/png'
             ? 'image/png'
             : file.type === 'image/webp'
               ? 'image/webp'
@@ -481,11 +494,11 @@ export function ReportPage() {
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-text">
-                Evidence Uploads (up to 4 files, images or PDF, 5 MB each)
+                Evidence Uploads (up to 4 files, images, PDF, or DOCX, 5 MB each)
               </label>
               <input
                 type="file"
-                accept="image/*,application/pdf,.pdf"
+                accept="image/*,application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx"
                 multiple
                 onChange={handlePhotoChange}
                 className="block w-full text-sm text-text-muted file:mr-4 file:rounded-md file:border-0 file:bg-sage-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-sage-700 hover:file:bg-sage-100"
@@ -494,19 +507,21 @@ export function ReportPage() {
                 <div className="flex gap-3 pt-2">
                   {evidenceFiles.map((file, i) => (
                     <div key={i} className="relative">
-                      {isPdfFile(file) ? (
-                        <div className="flex h-20 w-20 flex-col items-center justify-center rounded-md border border-border bg-surface-muted text-center">
-                          <span className="text-xs font-semibold text-danger">PDF</span>
-                          <span className="mt-1 px-1 text-[10px] leading-tight text-text-muted">
-                            {file.name}
-                          </span>
-                        </div>
-                      ) : (
+                      {getEvidenceKind(file) === 'image' ? (
                         <img
                           src={URL.createObjectURL(file)}
                           alt={`Upload ${i + 1}`}
                           className="h-20 w-20 rounded-md object-cover border border-border"
                         />
+                      ) : (
+                        <div className="flex h-20 w-20 flex-col items-center justify-center rounded-md border border-border bg-surface-muted text-center">
+                          <span className="text-xs font-semibold text-danger">
+                            {getEvidenceKind(file).toUpperCase()}
+                          </span>
+                          <span className="mt-1 px-1 text-[10px] leading-tight text-text-muted">
+                            {file.name}
+                          </span>
+                        </div>
                       )}
                       <button
                         type="button"
