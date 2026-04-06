@@ -54,6 +54,13 @@ export function PropertyDetails({
   const getRebuttalForReport = (reportId: string) =>
     rebuttals.find((r) => r.report_id === reportId);
 
+  const formatDate = (value: string) =>
+    new Date(value).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+
   return (
     <div className="space-y-6">
       <div className="pt-4">
@@ -104,14 +111,35 @@ export function PropertyDetails({
                   <div className="flex flex-wrap gap-2 text-sm text-text-muted">
                     {report.issue_started_at && (
                       <span className="rounded-full bg-surface-muted px-2.5 py-1">
-                        Issue started: {new Date(report.issue_started_at).toLocaleDateString()}
+                        Issue started: {formatDate(report.issue_started_at)}
                       </span>
                     )}
                     {report.landlord_notified_at && (
                       <span className="rounded-full bg-surface-muted px-2.5 py-1">
-                        Landlord notified: {new Date(report.landlord_notified_at).toLocaleDateString()}
+                        Landlord notified: {formatDate(report.landlord_notified_at)}
                       </span>
                     )}
+                  </div>
+
+                  <div className="grid gap-3 rounded-lg border border-border bg-surface-muted/60 p-4 md:grid-cols-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Issue Type</p>
+                      <p className="mt-1 text-sm font-medium text-text">
+                        {issueLabels[report.issue_type] || report.issue_type}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Posted</p>
+                      <p className="mt-1 text-sm font-medium text-text">{formatDate(report.created_at)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Severity</p>
+                      <p className="mt-1 text-sm font-medium text-text">{severity.label}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Evidence Level</p>
+                      <p className="mt-1 text-sm font-medium text-text">{evidenceTier.label}</p>
+                    </div>
                   </div>
 
                   {report.evidence_details && (
@@ -124,16 +152,53 @@ export function PropertyDetails({
                   )}
 
                   {report.photo_urls && report.photo_urls.length > 0 && (
-                    <div className="flex gap-2 overflow-x-auto">
-                      {report.photo_urls.map((url, i) => (
-                        <img
-                          key={i}
-                          src={url}
-                          alt={`Evidence ${i + 1}`}
-                          className="h-20 w-20 rounded-lg object-cover"
-                          loading="lazy"
-                        />
-                      ))}
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm font-semibold uppercase tracking-wide text-text-muted">
+                          Evidence Uploads
+                        </p>
+                        <p className="mt-1 text-sm text-text-muted">
+                          Open an image in a new tab or download the original file.
+                        </p>
+                      </div>
+                      <div className="flex gap-3 overflow-x-auto pb-1">
+                        {report.photo_urls.map((url, i) => (
+                          <a
+                            key={i}
+                            href={url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="group block shrink-0"
+                          >
+                            <img
+                              src={url}
+                              alt={`Evidence ${i + 1}`}
+                              className="h-28 w-28 rounded-lg border border-border object-cover transition-transform group-hover:scale-[1.02]"
+                              loading="lazy"
+                            />
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <span className="inline-flex rounded-full bg-surface-muted px-2.5 py-1 text-xs font-medium text-text">
+                                Evidence {i + 1}
+                              </span>
+                              <span className="inline-flex rounded-full bg-sage-50 px-2.5 py-1 text-xs font-medium text-sage-700">
+                                Open
+                              </span>
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {report.photo_urls.map((url, i) => (
+                          <a
+                            key={`${url}-download`}
+                            href={url}
+                            download
+                            className="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-sm font-medium text-sage-700 ring-1 ring-border transition-colors hover:bg-sage-50"
+                          >
+                            Download Evidence {i + 1}
+                          </a>
+                        ))}
+                      </div>
                     </div>
                   )}
 

@@ -6,7 +6,7 @@ import { AddressAutocomplete } from '../components/features/AddressAutocomplete'
 import { useAuth } from '../contexts/AuthContext';
 import { useFormBehavior } from '../hooks';
 import { supabase } from '../lib/supabase';
-import { validateAddress, ensureProperty } from '../lib/addressValidation';
+import { validateAddress, ensureProperty, parseSingleLineAddress } from '../lib/addressValidation';
 import type { Database } from '../types/database';
 
 /** Strip EXIF metadata by re-encoding the image through a canvas */
@@ -78,6 +78,25 @@ function EvidenceTierGuide() {
   );
 }
 
+function normalizeAddressPart(value: string) {
+  return value.replace(/\./g, '').replace(/\s+/g, ' ').trim().toUpperCase();
+}
+
+function shouldConfirmValidatedAddress(original: string, normalized: string) {
+  const parsedOriginal = parseSingleLineAddress(original);
+  const parsedNormalized = parseSingleLineAddress(normalized);
+
+  if (!parsedOriginal || !parsedNormalized) {
+    return normalizeAddressPart(original) !== normalizeAddressPart(normalized);
+  }
+
+  return (
+    normalizeAddressPart(parsedOriginal.streetAddress) !== normalizeAddressPart(parsedNormalized.streetAddress) ||
+    normalizeAddressPart(parsedOriginal.city) !== normalizeAddressPart(parsedNormalized.city) ||
+    normalizeAddressPart(parsedOriginal.state) !== normalizeAddressPart(parsedNormalized.state)
+  );
+}
+
 export function ReportPage() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
@@ -99,8 +118,13 @@ export function ReportPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [submittedPropertyId, setSubmittedPropertyId] = useState<string | null>(null);
   const [addressSearching, setAddressSearching] = useState(false);
   const [addressError, setAddressError] = useState('');
+  const [validatedAddressSuggestion, setValidatedAddressSuggestion] = useState<{
+    original: string;
+    normalized: string;
+  } | null>(null);
 
   // Severity color-shift: set data attribute on body
   useEffect(() => {
@@ -165,6 +189,15 @@ export function ReportPage() {
         setError(`This address is in ${validationResult.address.city}, ${validationResult.address.state}. SafeSpace doesn't cover this area yet.`);
         return;
       }
+      if (shouldConfirmValidatedAddress(form.address, validationResult.normalized)) {
+        setValidatedAddressSuggestion({
+          original: form.address,
+          normalized: validationResult.normalized,
+        });
+        setError('');
+        return;
+      }
+      setValidatedAddressSuggestion(null);
 
       // Find or create property using the canonical normalized address
       const property = await ensureProperty(validationResult);
@@ -202,6 +235,7 @@ export function ReportPage() {
       const { error: reportErr } = await supabase.from('reports').insert(reportPayload);
 
       if (reportErr) throw reportErr;
+      setSubmittedPropertyId(property.id);
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit report. Please try again.');
@@ -225,7 +259,7 @@ export function ReportPage() {
               Your report has been recorded. This helps other tenants and builds a record of property conditions.
             </p>
             <div className="flex justify-center gap-4 pt-2">
-              <Link to="/property-lookup">
+              <Link to={submittedPropertyId ? `/property/${submittedPropertyId}` : '/property-lookup'}>
                 <Button variant="secondary">View Property</Button>
               </Link>
               <Link to={`/legal-notice?address=${encodeURIComponent(form.address)}`}>
@@ -300,6 +334,36 @@ export function ReportPage() {
                 placeholder="Start typing the property address..."
                 showSubmitButton={false}
               />
+              {validatedAddressSuggestion && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                  <p className="font-medium text-amber-950">Review the validated address before you post.</p>
+                  <p className="mt-2">
+                    You entered <strong>{validatedAddressSuggestion.original}</strong>, but SafeSpace validated this as{' '}
+                    <strong>{validatedAddressSuggestion.normalized}</strong>.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        updateField('address', validatedAddressSuggestion.normalized);
+                        setValidatedAddressSuggestion(null);
+                        setAddressError('');
+                      }}
+                    >
+                      Use Validated Address
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setValidatedAddressSuggestion(null)}
+                    >
+                      Keep Editing
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
