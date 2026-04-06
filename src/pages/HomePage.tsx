@@ -37,7 +37,7 @@ export function HomePage() {
     { value: `${dbStats.totalCities}+`, label: 'Cities Researched' },
     { value: '54', label: 'States & Territories' },
     { value: '7', label: 'Review Categories' },
-    { value: 'Free', label: 'Always' },
+    { value: 'Free for Renters', label: '$10 for Landlords' },
   ];
 
   const flows = [
@@ -235,7 +235,7 @@ export function HomePage() {
       <section className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {stats.map((s) => (
           <Card key={s.label} className="text-center !p-4">
-            <p className="text-2xl sm:text-3xl font-bold text-sage-700">{s.value}</p>
+            <p className="text-xl sm:text-2xl font-bold text-sage-700">{s.value}</p>
             <p className="text-sm text-text-muted mt-1">{s.label}</p>
           </Card>
         ))}
