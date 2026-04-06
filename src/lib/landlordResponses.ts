@@ -41,38 +41,78 @@ export function clearPendingLandlordResponse() {
   sessionStorage.removeItem(PENDING_RESPONSE_KEY);
 }
 
-export async function startLandlordResponseCheckout(payload: PendingLandlordResponse) {
-  const { url } = getSupabaseFunctionUrl();
+async function getAccessToken() {
   const { data: { session } } = await supabase.auth.getSession();
-  const accessToken = session?.access_token;
 
-  if (!accessToken) {
+  if (session?.access_token) {
+    return session.access_token;
+  }
+
+  const { data, error } = await supabase.auth.refreshSession();
+  if (error || !data.session?.access_token) {
     throw new Error('Sign in as a landlord before submitting a response.');
   }
 
-  sessionStorage.setItem(PENDING_RESPONSE_KEY, JSON.stringify(payload));
+  return data.session.access_token;
+}
 
-  const response = await fetch(url, {
+async function readFunctionError(response: Response) {
+  const body = await response.json().catch(() => null);
+
+  if (!body || typeof body !== 'object') {
+    return 'Unable to contact SafeSpace checkout.';
+  }
+
+  const message =
+    ('error' in body && typeof body.error === 'string' && body.error) ||
+    ('message' in body && typeof body.message === 'string' && body.message) ||
+    ('msg' in body && typeof body.msg === 'string' && body.msg);
+
+  return message || 'Unable to contact SafeSpace checkout.';
+}
+
+async function callLandlordResponseFunction(payload: unknown, accessToken: string) {
+  const { url } = getSupabaseFunctionUrl();
+
+  return fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify({
-      action: 'create-checkout',
-      responseType: payload.responseType,
-      targetId: payload.targetId,
-      propertyId: payload.propertyId,
-      landlordId: payload.landlordId || null,
-      landlordEmail: payload.landlordEmail,
-      successUrl: `${window.location.origin}/#/property/${payload.propertyId}?payment=success&type=${payload.responseType}&session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${window.location.origin}/#/property/${payload.propertyId}?payment=cancelled&type=${payload.responseType}`,
-    }),
+    body: JSON.stringify(payload),
   });
+}
+
+export async function startLandlordResponseCheckout(payload: PendingLandlordResponse) {
+  sessionStorage.setItem(PENDING_RESPONSE_KEY, JSON.stringify(payload));
+
+  const requestBody = {
+    action: 'create-checkout',
+    responseType: payload.responseType,
+    targetId: payload.targetId,
+    propertyId: payload.propertyId,
+    landlordId: payload.landlordId || null,
+    landlordEmail: payload.landlordEmail,
+    successUrl: `${window.location.origin}/#/property/${payload.propertyId}?payment=success&type=${payload.responseType}&session_id={CHECKOUT_SESSION_ID}`,
+    cancelUrl: `${window.location.origin}/#/property/${payload.propertyId}?payment=cancelled&type=${payload.responseType}`,
+  };
+
+  let accessToken = await getAccessToken();
+  let response = await callLandlordResponseFunction(requestBody, accessToken);
+
+  if (response.status === 401) {
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error || !data.session?.access_token) {
+      throw new Error('Sign in again before starting checkout.');
+    }
+
+    accessToken = data.session.access_token;
+    response = await callLandlordResponseFunction(requestBody, accessToken);
+  }
 
   if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.error || 'Unable to start checkout.');
+    throw new Error(await readFunctionError(response));
   }
 
   const data = await response.json();
@@ -89,35 +129,32 @@ export async function finalizePendingLandlordResponse(sessionId: string) {
     throw new Error('No pending landlord response was found for this browser session.');
   }
 
-  const { url } = getSupabaseFunctionUrl();
-  const { data: { session } } = await supabase.auth.getSession();
-  const accessToken = session?.access_token;
+  const requestBody = {
+    action: 'finalize',
+    sessionId,
+    responseType: pending.responseType,
+    targetId: pending.targetId,
+    propertyId: pending.propertyId,
+    landlordId: pending.landlordId || null,
+    landlordEmail: pending.landlordEmail,
+    body: pending.body,
+  };
 
-  if (!accessToken) {
-    throw new Error('Sign in again to finish publishing this landlord response.');
+  let accessToken = await getAccessToken();
+  let response = await callLandlordResponseFunction(requestBody, accessToken);
+
+  if (response.status === 401) {
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error || !data.session?.access_token) {
+      throw new Error('Sign in again to finish publishing this landlord response.');
+    }
+
+    accessToken = data.session.access_token;
+    response = await callLandlordResponseFunction(requestBody, accessToken);
   }
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({
-      action: 'finalize',
-      sessionId,
-      responseType: pending.responseType,
-      targetId: pending.targetId,
-      propertyId: pending.propertyId,
-      landlordId: pending.landlordId || null,
-      landlordEmail: pending.landlordEmail,
-      body: pending.body,
-    }),
-  });
-
   if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.error || 'Unable to verify payment and save the landlord response.');
+    throw new Error(await readFunctionError(response));
   }
 
   clearPendingLandlordResponse();
