@@ -28,6 +28,10 @@ const EVIDENCE_TIERS: Record<string, { label: string; style: string }> = {
   },
 };
 
+function isPdfEvidence(url: string) {
+  return url.toLowerCase().includes('.pdf');
+}
+
 export function PropertyDetails({
   address,
   reports,
@@ -158,33 +162,64 @@ export function PropertyDetails({
                           Evidence Uploads
                         </p>
                         <p className="mt-1 text-sm text-text-muted">
-                          Open an image in a new tab or download the original file.
+                          Open or download each uploaded file.
                         </p>
                       </div>
                       <div className="flex gap-3 overflow-x-auto pb-1">
                         {report.photo_urls.map((url, i) => (
-                          <a
-                            key={i}
-                            href={url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="group block shrink-0"
-                          >
-                            <img
-                              src={url}
-                              alt={`Evidence ${i + 1}`}
-                              className="h-28 w-28 rounded-lg border border-border object-cover transition-transform group-hover:scale-[1.02]"
-                              loading="lazy"
-                            />
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              <span className="inline-flex rounded-full bg-surface-muted px-2.5 py-1 text-xs font-medium text-text">
-                                Evidence {i + 1}
-                              </span>
-                              <span className="inline-flex rounded-full bg-sage-50 px-2.5 py-1 text-xs font-medium text-sage-700">
-                                Open
-                              </span>
+                          isPdfEvidence(url) ? (
+                            <div
+                              key={i}
+                              className="flex w-48 shrink-0 flex-col rounded-lg border border-border bg-surface p-4"
+                            >
+                              <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-border bg-surface-muted text-center">
+                                <div className="space-y-1">
+                                  <p className="text-sm font-semibold uppercase tracking-wide text-danger">PDF</p>
+                                  <p className="text-xs text-text-muted">Evidence {i + 1}</p>
+                                </div>
+                              </div>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                <a
+                                  href={url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex rounded-full bg-sage-50 px-2.5 py-1 text-xs font-medium text-sage-700"
+                                >
+                                  Open PDF
+                                </a>
+                                <a
+                                  href={url}
+                                  download
+                                  className="inline-flex rounded-full bg-surface-muted px-2.5 py-1 text-xs font-medium text-text"
+                                >
+                                  Download PDF
+                                </a>
+                              </div>
                             </div>
-                          </a>
+                          ) : (
+                            <a
+                              key={i}
+                              href={url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="group block shrink-0"
+                            >
+                              <img
+                                src={url}
+                                alt={`Evidence ${i + 1}`}
+                                className="h-28 w-28 rounded-lg border border-border object-cover transition-transform group-hover:scale-[1.02]"
+                                loading="lazy"
+                              />
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                <span className="inline-flex rounded-full bg-surface-muted px-2.5 py-1 text-xs font-medium text-text">
+                                  Evidence {i + 1}
+                                </span>
+                                <span className="inline-flex rounded-full bg-sage-50 px-2.5 py-1 text-xs font-medium text-sage-700">
+                                  Open
+                                </span>
+                              </div>
+                            </a>
+                          )
                         ))}
                       </div>
                       <div className="flex flex-wrap gap-2">

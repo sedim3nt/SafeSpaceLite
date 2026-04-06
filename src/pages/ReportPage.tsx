@@ -32,6 +32,17 @@ function stripExif(file: File): Promise<Blob> {
   });
 }
 
+function getEvidenceExtension(file: File) {
+  if (file.type === 'application/pdf') return 'pdf';
+  if (file.type === 'image/png') return 'png';
+  if (file.type === 'image/webp') return 'webp';
+  return 'jpg';
+}
+
+function isPdfFile(file: File) {
+  return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+}
+
 const issueTypes = [
   { value: 'mold', label: 'Mold' },
   { value: 'radon', label: 'Radon' },
@@ -114,7 +125,7 @@ export function ReportPage() {
     dateNotified: '',
     isAnonymous: true,
   });
-  const [photos, setPhotos] = useState<File[]>([]);
+  const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -143,12 +154,15 @@ export function ReportPage() {
 
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const valid = files.filter(f => f.size <= 5 * 1024 * 1024 && f.type.startsWith('image/'));
-    setPhotos(prev => [...prev, ...valid].slice(0, 4));
+    const valid = files.filter((file) => {
+      const isAcceptedType = file.type.startsWith('image/') || isPdfFile(file);
+      return file.size <= 5 * 1024 * 1024 && isAcceptedType;
+    });
+    setEvidenceFiles((prev) => [...prev, ...valid].slice(0, 4));
   };
 
   const removePhoto = (index: number) => {
-    setPhotos(prev => prev.filter((_, i) => i !== index));
+    setEvidenceFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleAddressLookup = async (address: string) => {
@@ -202,14 +216,22 @@ export function ReportPage() {
       // Find or create property using the canonical normalized address
       const property = await ensureProperty(validationResult);
 
-      // Upload photos to Supabase Storage (EXIF stripped for privacy)
+      // Upload evidence files to Supabase Storage (EXIF stripped for images)
       const photoUrls: string[] = [];
-      for (const photo of photos) {
-        const stripped = await stripExif(photo);
-        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+      for (const file of evidenceFiles) {
+        const uploadBody = isPdfFile(file) ? file : await stripExif(file);
+        const extension = getEvidenceExtension(file);
+        const contentType = isPdfFile(file)
+          ? 'application/pdf'
+          : file.type === 'image/png'
+            ? 'image/png'
+            : file.type === 'image/webp'
+              ? 'image/webp'
+              : 'image/jpeg';
+        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
         const { error: uploadErr } = await supabase.storage
           .from('evidence')
-          .upload(path, stripped, { contentType: 'image/jpeg' });
+          .upload(path, uploadBody, { contentType });
 
         if (!uploadErr) {
           const { data: urlData } = supabase.storage.from('evidence').getPublicUrl(path);
@@ -459,24 +481,33 @@ export function ReportPage() {
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-text">
-                Photo Evidence (up to 4 images, 5 MB each)
+                Evidence Uploads (up to 4 files, images or PDF, 5 MB each)
               </label>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,application/pdf,.pdf"
                 multiple
                 onChange={handlePhotoChange}
                 className="block w-full text-sm text-text-muted file:mr-4 file:rounded-md file:border-0 file:bg-sage-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-sage-700 hover:file:bg-sage-100"
               />
-              {photos.length > 0 && (
+              {evidenceFiles.length > 0 && (
                 <div className="flex gap-3 pt-2">
-                  {photos.map((photo, i) => (
+                  {evidenceFiles.map((file, i) => (
                     <div key={i} className="relative">
-                      <img
-                        src={URL.createObjectURL(photo)}
-                        alt={`Upload ${i + 1}`}
-                        className="h-20 w-20 rounded-md object-cover border border-border"
-                      />
+                      {isPdfFile(file) ? (
+                        <div className="flex h-20 w-20 flex-col items-center justify-center rounded-md border border-border bg-surface-muted text-center">
+                          <span className="text-xs font-semibold text-danger">PDF</span>
+                          <span className="mt-1 px-1 text-[10px] leading-tight text-text-muted">
+                            {file.name}
+                          </span>
+                        </div>
+                      ) : (
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`Upload ${i + 1}`}
+                          className="h-20 w-20 rounded-md object-cover border border-border"
+                        />
+                      )}
                       <button
                         type="button"
                         onClick={() => removePhoto(i)}
