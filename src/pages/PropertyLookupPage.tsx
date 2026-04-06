@@ -5,6 +5,7 @@ import { PropertyDetails } from '../components/features/PropertyLookup/PropertyD
 import { LandlordScoreCard } from '../components/features/RentalReview/LandlordScoreCard';
 import { JurisdictionLayers } from '../components/features/Jurisdictions/JurisdictionLayers';
 import { PersistentLandlordPanel } from '../components/features/LandlordResponses/PersistentLandlordPanel';
+import { trackAnalyticsEvent } from '../lib/analytics';
 import { supabase } from '../lib/supabase';
 import { ensureProperty, type AddressValidationResult } from '../lib/addressValidation';
 import { finalizePendingLandlordResponse } from '../lib/landlordResponses';
@@ -119,6 +120,11 @@ export function PropertyLookupPage() {
               ? 'Payment received. The landlord note was added to this property page.'
             : 'Payment received. The landlord response was added to this safety report.',
         );
+        if (responseType === 'property') {
+          trackAnalyticsEvent('landlord_note_published', {
+            property_id: resolvedPropertyId,
+          });
+        }
         await fetchPropertyData(resolvedPropertyId);
         setReviewRefreshToken((current) => current + 1);
       } catch (err) {

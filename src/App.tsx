@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Layout } from './components/layout';
+import { sendAnalyticsPageView } from './lib/analytics';
 import {
   HomePage,
   EmergencyGuidePage,
@@ -20,25 +21,12 @@ import { BoulderLandingPage } from './pages/BoulderLandingPage';
 import { CitiesPage } from './pages/CitiesPage';
 import { AIChatWidget } from './components/features/AIChat/AIChatWidget';
 
-declare global {
-  interface Window {
-    gtag?: (...args: unknown[]) => void;
-  }
-}
-
 function AnalyticsTracker() {
   const location = useLocation();
 
   useEffect(() => {
-    if (!window.gtag) return;
-
     const pagePath = `${location.pathname}${location.search}${location.hash}`;
-
-    window.gtag('event', 'page_view', {
-      page_title: document.title,
-      page_location: window.location.href,
-      page_path: pagePath,
-    });
+    sendAnalyticsPageView(pagePath);
   }, [location]);
 
   return null;

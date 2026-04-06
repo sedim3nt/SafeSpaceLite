@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { Button, Card, Input, Textarea } from '../../common';
 import { ProtectedAction } from '../../auth/ProtectedAction';
 import { AddressAutocomplete } from '../AddressAutocomplete';
+import { trackAnalyticsEvent } from '../../../lib/analytics';
 import { supabase } from '../../../lib/supabase';
 import { sendContentNotification } from '../../../lib/contentNotifications';
 import { ensureProperty, validateAddress, type AddressValidationResult } from '../../../lib/addressValidation';
@@ -214,6 +215,14 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
         ratings,
       }).catch((notificationError) => {
         console.error('Failed to send review notification', notificationError);
+      });
+
+      trackAnalyticsEvent('review_submitted', {
+        property_id: propertyId,
+        relationship_type: relationshipType,
+        landlord_name: landlordPayload.name,
+        is_anonymous: isAnonymous,
+        tag_count: selectedTags.length,
       });
 
       setSuccess(true);

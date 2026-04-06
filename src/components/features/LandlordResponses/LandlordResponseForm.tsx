@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, Button, Input, Textarea } from '../../common';
 import { useAuth } from '../../../contexts/AuthContext';
 import { AuthModal } from '../../auth/AuthModal';
+import { trackAnalyticsEvent } from '../../../lib/analytics';
 import {
   startLandlordResponseCheckout,
   type LandlordResponseType,
@@ -64,6 +65,12 @@ export function LandlordResponseForm({
     setError('');
 
     try {
+      if (responseType === 'property') {
+        trackAnalyticsEvent('landlord_note_checkout_started', {
+          property_id: propertyId,
+        });
+      }
+
       await startLandlordResponseCheckout({
         responseType,
         targetId,

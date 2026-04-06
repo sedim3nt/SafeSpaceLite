@@ -5,6 +5,7 @@ import { ProtectedAction } from '../components/auth/ProtectedAction';
 import { AddressAutocomplete } from '../components/features/AddressAutocomplete';
 import { useAuth } from '../contexts/AuthContext';
 import { useFormBehavior } from '../hooks';
+import { trackAnalyticsEvent } from '../lib/analytics';
 import { supabase } from '../lib/supabase';
 import { sendContentNotification } from '../lib/contentNotifications';
 import { validateAddress, ensureProperty, parseSingleLineAddress } from '../lib/addressValidation';
@@ -283,6 +284,14 @@ export function ReportPage() {
         isAnonymous: form.isAnonymous,
       }).catch((notificationError) => {
         console.error('Failed to send report notification', notificationError);
+      });
+
+      trackAnalyticsEvent('report_submitted', {
+        property_id: property.id,
+        issue_type: form.issueType,
+        severity: form.severity,
+        evidence_tier: form.evidenceTier,
+        is_anonymous: form.isAnonymous,
       });
 
       setSubmittedPropertyId(property.id);
