@@ -6,6 +6,7 @@ import { AddressAutocomplete } from '../components/features/AddressAutocomplete'
 import { useAuth } from '../contexts/AuthContext';
 import { useFormBehavior } from '../hooks';
 import { supabase } from '../lib/supabase';
+import { sendContentNotification } from '../lib/contentNotifications';
 import { validateAddress, ensureProperty, parseSingleLineAddress } from '../lib/addressValidation';
 import type { Database } from '../types/database';
 
@@ -270,6 +271,20 @@ export function ReportPage() {
       const { error: reportErr } = await supabase.from('reports').insert(reportPayload);
 
       if (reportErr) throw reportErr;
+
+      void sendContentNotification({
+        type: 'report',
+        propertyId: property.id,
+        propertyAddress: validationResult.normalized,
+        issueType: form.issueType,
+        severity: form.severity,
+        description: form.description.trim(),
+        evidenceTier: form.evidenceTier,
+        isAnonymous: form.isAnonymous,
+      }).catch((notificationError) => {
+        console.error('Failed to send report notification', notificationError);
+      });
+
       setSubmittedPropertyId(property.id);
       setSuccess(true);
     } catch (err) {

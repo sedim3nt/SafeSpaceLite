@@ -3,6 +3,7 @@ import { Button, Card, Input, Textarea } from '../../common';
 import { ProtectedAction } from '../../auth/ProtectedAction';
 import { AddressAutocomplete } from '../AddressAutocomplete';
 import { supabase } from '../../../lib/supabase';
+import { sendContentNotification } from '../../../lib/contentNotifications';
 import { ensureProperty, validateAddress, type AddressValidationResult } from '../../../lib/addressValidation';
 import { useAuth } from '../../../contexts/AuthContext';
 import type { Landlord } from '../../../types/database';
@@ -200,6 +201,20 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
         }
         throw reviewErr;
       }
+
+      void sendContentNotification({
+        type: 'review',
+        propertyId,
+        propertyAddress: address,
+        landlordName: landlordPayload.name,
+        relationshipType,
+        comment: comment.trim() || undefined,
+        tags: selectedTags,
+        isAnonymous,
+        ratings,
+      }).catch((notificationError) => {
+        console.error('Failed to send review notification', notificationError);
+      });
 
       setSuccess(true);
     } catch (err) {
