@@ -8,7 +8,7 @@ import { PersistentLandlordPanel } from '../components/features/LandlordResponse
 import { trackAnalyticsEvent } from '../lib/analytics';
 import { supabase } from '../lib/supabase';
 import { ensureProperty, type AddressValidationResult } from '../lib/addressValidation';
-import { finalizePendingLandlordResponse } from '../lib/landlordResponses';
+import { clearLandlordResponseDraft, finalizePendingLandlordResponse } from '../lib/landlordResponses';
 import { resolveJurisdictionLayers, type JurisdictionResolution } from '../data/jurisdictions';
 import type { PropertyLandlordStatement, Report, Rebuttal, Property } from '../types/database';
 
@@ -112,12 +112,15 @@ export function PropertyLookupPage() {
     const sessionId = searchParams.get('session_id');
     const propertyId = routePropertyId || searchParams.get('property') || undefined;
     const responseType = searchParams.get('type');
+    const targetId = searchParams.get('target');
 
     if (payment === 'cancelled') {
       setPaymentStatus('cancelled');
       setPaymentMessage('Payment was cancelled. Your landlord response was not submitted.');
       const nextParams = new URLSearchParams(searchParams);
       nextParams.delete('payment');
+      nextParams.delete('type');
+      nextParams.delete('target');
       setSearchParams(nextParams, { replace: true });
       return;
     }
@@ -132,6 +135,15 @@ export function PropertyLookupPage() {
       try {
         await finalizePendingLandlordResponse(paidSessionId);
         if (cancelled) return;
+        if (responseType === 'report' || responseType === 'review' || responseType === 'property') {
+          if (targetId) {
+            clearLandlordResponseDraft({
+              responseType,
+              targetId,
+              propertyId: resolvedPropertyId,
+            });
+          }
+        }
         setPaymentStatus('success');
         setPaymentMessage(
           responseType === 'review'
@@ -162,6 +174,7 @@ export function PropertyLookupPage() {
           nextParams.delete('session_id');
           nextParams.delete('property');
           nextParams.delete('type');
+          nextParams.delete('target');
           setSearchParams(nextParams, { replace: true });
         }
       }

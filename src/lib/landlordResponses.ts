@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { clearDraft } from './draftStorage';
 
 export type LandlordResponseType = 'report' | 'review' | 'property';
 
@@ -13,6 +14,14 @@ export interface PendingLandlordResponse {
 
 const PENDING_RESPONSE_KEY = 'pending_landlord_response';
 
+export function getLandlordResponseDraftKey(payload: Pick<PendingLandlordResponse, 'responseType' | 'targetId' | 'propertyId'>) {
+  return `landlord-response:${payload.responseType}:${payload.propertyId}:${payload.targetId}`;
+}
+
+export function clearLandlordResponseDraft(payload: Pick<PendingLandlordResponse, 'responseType' | 'targetId' | 'propertyId'>) {
+  clearDraft(getLandlordResponseDraftKey(payload));
+}
+
 function getCheckoutReturnUrl(
   payload: PendingLandlordResponse,
   status: 'success' | 'cancelled',
@@ -20,6 +29,7 @@ function getCheckoutReturnUrl(
   const params = new URLSearchParams();
   params.set('payment', status);
   params.set('type', payload.responseType);
+  params.set('target', payload.targetId);
 
   if (status === 'success') {
     params.set('session_id', '{CHECKOUT_SESSION_ID}');

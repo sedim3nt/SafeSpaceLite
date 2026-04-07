@@ -8,6 +8,7 @@ import { supabase } from '../../../lib/supabase';
 import { sendContentNotification } from '../../../lib/contentNotifications';
 import { ensureProperty, validateAddress, type AddressValidationResult } from '../../../lib/addressValidation';
 import { useAuth } from '../../../contexts/AuthContext';
+import { clearDraft, readDraft, writeDraft } from '../../../lib/draftStorage';
 import type { Landlord } from '../../../types/database';
 
 const RELATIONSHIP_TYPES = [
@@ -56,6 +57,67 @@ const RATING_SCALE = [
   { value: 5, label: 'Excellent' },
 ] as const;
 
+const REVIEW_DRAFT_KEY = 'review';
+const DEFAULT_RATINGS: Record<RatingKey, number> = {
+  responsiveness: 0,
+  fairness: 0,
+  respect: 0,
+  temperament: 0,
+  property_condition: 0,
+  communication: 0,
+  safety: 0,
+};
+
+type ReviewDraft = {
+  step: number;
+  propertyId: string;
+  address: string;
+  relationshipType: string;
+  landlordName: string;
+  companyName: string;
+  ratings: Record<RatingKey, number>;
+  selectedTags: string[];
+  comment: string;
+  isAnonymous: boolean;
+};
+
+function getInitialReviewDraft(initialPropertyId?: string, propertyAddress?: string): ReviewDraft {
+  const savedDraft = readDraft<ReviewDraft>(REVIEW_DRAFT_KEY);
+  const hasPropertyContext = Boolean(initialPropertyId || propertyAddress);
+  const draftMatchesContext = !hasPropertyContext || (
+    (!initialPropertyId || savedDraft?.propertyId === initialPropertyId) &&
+    (!propertyAddress || savedDraft?.address === propertyAddress)
+  );
+
+  if (!savedDraft || !draftMatchesContext) {
+    return {
+      step: initialPropertyId ? 2 : 1,
+      propertyId: initialPropertyId || '',
+      address: propertyAddress || '',
+      relationshipType: '',
+      landlordName: '',
+      companyName: '',
+      ratings: { ...DEFAULT_RATINGS },
+      selectedTags: [],
+      comment: '',
+      isAnonymous: true,
+    };
+  }
+
+  return {
+    step: Math.max(initialPropertyId ? 2 : 1, Math.min(savedDraft.step || 1, 7)),
+    propertyId: initialPropertyId || savedDraft.propertyId || '',
+    address: propertyAddress || savedDraft.address || '',
+    relationshipType: savedDraft.relationshipType || '',
+    landlordName: savedDraft.landlordName || '',
+    companyName: savedDraft.companyName || '',
+    ratings: { ...DEFAULT_RATINGS, ...savedDraft.ratings },
+    selectedTags: Array.isArray(savedDraft.selectedTags) ? savedDraft.selectedTags : [],
+    comment: savedDraft.comment || '',
+    isAnonymous: savedDraft.isAnonymous ?? true,
+  };
+}
+
 interface ReviewFormProps {
   propertyId?: string;
   propertyAddress?: string;
@@ -63,22 +125,20 @@ interface ReviewFormProps {
 
 export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: ReviewFormProps) {
   const { user } = useAuth();
-  const [step, setStep] = useState(initialPropertyId ? 2 : 1);
-  const [propertyId, setPropertyId] = useState(initialPropertyId || '');
-  const [address, setAddress] = useState(propertyAddress || '');
+  const [initialDraft] = useState(() => getInitialReviewDraft(initialPropertyId, propertyAddress));
+  const [step, setStep] = useState(initialDraft.step);
+  const [propertyId, setPropertyId] = useState(initialDraft.propertyId);
+  const [address, setAddress] = useState(initialDraft.address);
   const [searchingAddress, setSearchingAddress] = useState(false);
   const [searchError, setSearchError] = useState('');
-  const [relationshipType, setRelationshipType] = useState('');
-  const [landlordName, setLandlordName] = useState('');
-  const [companyName, setCompanyName] = useState('');
+  const [relationshipType, setRelationshipType] = useState(initialDraft.relationshipType);
+  const [landlordName, setLandlordName] = useState(initialDraft.landlordName);
+  const [companyName, setCompanyName] = useState(initialDraft.companyName);
   const [existingLandlords, setExistingLandlords] = useState<Landlord[]>([]);
-  const [ratings, setRatings] = useState<Record<RatingKey, number>>({
-    responsiveness: 0, fairness: 0, respect: 0, temperament: 0,
-    property_condition: 0, communication: 0, safety: 0,
-  });
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [comment, setComment] = useState('');
-  const [isAnonymous, setIsAnonymous] = useState(true);
+  const [ratings, setRatings] = useState<Record<RatingKey, number>>(initialDraft.ratings);
+  const [selectedTags, setSelectedTags] = useState<string[]>(initialDraft.selectedTags);
+  const [comment, setComment] = useState(initialDraft.comment);
+  const [isAnonymous, setIsAnonymous] = useState(initialDraft.isAnonymous);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [redirectPath, setRedirectPath] = useState<string | null>(null);
@@ -94,6 +154,21 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
         if (data) setExistingLandlords(data);
       });
   }, [propertyId]);
+
+  useEffect(() => {
+    writeDraft(REVIEW_DRAFT_KEY, {
+      step,
+      propertyId,
+      address,
+      relationshipType,
+      landlordName,
+      companyName,
+      ratings,
+      selectedTags,
+      comment,
+      isAnonymous,
+    } satisfies ReviewDraft);
+  }, [step, propertyId, address, relationshipType, landlordName, companyName, ratings, selectedTags, comment, isAnonymous]);
 
   const handleAddressSearch = async (result: AddressValidationResult) => {
     const prop = await ensureProperty(result);
@@ -226,6 +301,7 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
         tag_count: selectedTags.length,
       });
 
+      clearDraft(REVIEW_DRAFT_KEY);
       setRedirectPath(`/property/${propertyId}?tab=rental&posted=review`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit review. Please try again.');
@@ -261,8 +337,13 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-text">Where did you live?</h2>
           <AddressAutocomplete
-            onSelect={() => setSearchError('')}
+            initialValue={address}
+            onSelect={(value) => {
+              setAddress(value);
+              setSearchError('');
+            }}
             onSubmit={handleAddressSubmit}
+            onChangeQuery={setAddress}
             searching={searchingAddress}
             error={searchError}
             submitLabel="Start Review"
@@ -557,6 +638,10 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
               SafeSpace uses accounts to reduce spam and confirm a real person is submitting.
             </div>
           )}
+
+          <p className="text-sm text-text-muted">
+            Your draft is saved automatically in this browser while you finish this review.
+          </p>
 
           {error && (
             <div className="rounded-lg bg-red-50 border border-red-200 p-3">

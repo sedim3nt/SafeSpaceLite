@@ -9,6 +9,7 @@ import { trackAnalyticsEvent } from '../lib/analytics';
 import { supabase } from '../lib/supabase';
 import { sendContentNotification } from '../lib/contentNotifications';
 import { validateAddress, ensureProperty, parseSingleLineAddress } from '../lib/addressValidation';
+import { clearDraft, readDraft, writeDraft } from '../lib/draftStorage';
 import type { Database } from '../types/database';
 
 /** Strip EXIF metadata by re-encoding the image through a canvas */
@@ -120,23 +121,65 @@ function shouldConfirmValidatedAddress(original: string, normalized: string) {
   );
 }
 
+const REPORT_DRAFT_KEY = 'report';
+
+type ReportDraft = {
+  address: string;
+  issueType: string;
+  severity: string;
+  description: string;
+  evidenceTier: string;
+  evidenceDetails: string;
+  dateOccurred: string;
+  landlordNotified: boolean;
+  dateNotified: string;
+  isAnonymous: boolean;
+};
+
+const DEFAULT_REPORT_DRAFT: ReportDraft = {
+  address: '',
+  issueType: '',
+  severity: '',
+  description: '',
+  evidenceTier: 'narrative_only',
+  evidenceDetails: '',
+  dateOccurred: '',
+  landlordNotified: false,
+  dateNotified: '',
+  isAnonymous: true,
+};
+
+function getInitialReportDraft(addressFromQuery: string | null) {
+  const savedDraft = readDraft<ReportDraft>(REPORT_DRAFT_KEY);
+
+  if (!savedDraft) {
+    return {
+      ...DEFAULT_REPORT_DRAFT,
+      address: addressFromQuery ?? '',
+    };
+  }
+
+  if (addressFromQuery && savedDraft.address && savedDraft.address !== addressFromQuery) {
+    return {
+      ...DEFAULT_REPORT_DRAFT,
+      address: addressFromQuery,
+    };
+  }
+
+  return {
+    ...DEFAULT_REPORT_DRAFT,
+    ...savedDraft,
+    address: addressFromQuery ?? savedDraft.address ?? '',
+  };
+}
+
 export function ReportPage() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { isHumanLikely, onKeyActivity, honeypot, setHoneypot } = useFormBehavior();
+  const [initialDraft] = useState(() => getInitialReportDraft(searchParams.get('address')));
 
-  const [form, setForm] = useState({
-    address: searchParams.get('address') ?? '',
-    issueType: '',
-    severity: '',
-    description: '',
-    evidenceTier: 'narrative_only',
-    evidenceDetails: '',
-    dateOccurred: '',
-    landlordNotified: false,
-    dateNotified: '',
-    isAnonymous: true,
-  });
+  const [form, setForm] = useState(initialDraft);
   const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -159,6 +202,10 @@ export function ReportPage() {
       document.body.removeAttribute('data-severity');
     };
   }, [form.severity]);
+
+  useEffect(() => {
+    writeDraft(REPORT_DRAFT_KEY, form);
+  }, [form]);
 
   const updateField = (field: string, value: string | boolean) =>
     setForm(prev => ({ ...prev, [field]: value }));
@@ -293,6 +340,7 @@ export function ReportPage() {
         is_anonymous: form.isAnonymous,
       });
 
+      clearDraft(REPORT_DRAFT_KEY);
       setRedirectPath(`/property/${property.id}?posted=report`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit report. Please try again.');
@@ -505,6 +553,9 @@ export function ReportPage() {
                 onChange={handlePhotoChange}
                 className="block w-full text-sm text-text-muted file:mr-4 file:rounded-md file:border-0 file:bg-sage-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-sage-700 hover:file:bg-sage-100"
               />
+              <p className="text-sm text-text-muted">
+                Draft text is saved automatically in this browser. If you leave before posting, you will need to re-attach files.
+              </p>
               {evidenceFiles.length > 0 && (
                 <div className="flex gap-3 pt-2">
                   {evidenceFiles.map((file, i) => (

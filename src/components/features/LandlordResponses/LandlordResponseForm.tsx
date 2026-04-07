@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Card, Button, Input, Textarea } from '../../common';
 import { useAuth } from '../../../contexts/AuthContext';
 import { AuthModal } from '../../auth/AuthModal';
 import { trackAnalyticsEvent } from '../../../lib/analytics';
+import { readDraft, writeDraft } from '../../../lib/draftStorage';
 import {
+  getLandlordResponseDraftKey,
   startLandlordResponseCheckout,
   type LandlordResponseType,
 } from '../../../lib/landlordResponses';
@@ -52,14 +54,23 @@ export function LandlordResponseForm({
 }: LandlordResponseFormProps) {
   const location = useLocation();
   const { user } = useAuth();
-  const [body, setBody] = useState('');
+  const draftKey = getLandlordResponseDraftKey({ responseType, targetId, propertyId });
+  const [initialDraft] = useState(() => readDraft<{ body: string; confirmedAuthority: boolean }>(draftKey));
+  const [body, setBody] = useState(initialDraft?.body || '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [showAuth, setShowAuth] = useState(false);
-  const [confirmedAuthority, setConfirmedAuthority] = useState(false);
+  const [confirmedAuthority, setConfirmedAuthority] = useState(initialDraft?.confirmedAuthority ?? false);
 
   const copy = RESPONSE_COPY[responseType];
   const returnPath = `${location.pathname}${location.search}`;
+
+  useEffect(() => {
+    writeDraft(draftKey, {
+      body,
+      confirmedAuthority,
+    });
+  }, [draftKey, body, confirmedAuthority]);
 
   const handleCheckout = async () => {
     if (!user?.email || !body.trim() || !confirmedAuthority) return;
@@ -134,6 +145,9 @@ export function LandlordResponseForm({
           required
         />
         <p className="text-sm text-text-muted">{body.length}/1000 characters</p>
+        <p className="text-sm text-text-muted">
+          This draft is saved automatically in this browser until the response is successfully published.
+        </p>
 
         <label className="flex items-start gap-3 rounded-lg border border-border bg-white p-4">
           <input
