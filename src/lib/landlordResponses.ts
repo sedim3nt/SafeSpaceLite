@@ -13,6 +13,29 @@ export interface PendingLandlordResponse {
 
 const PENDING_RESPONSE_KEY = 'pending_landlord_response';
 
+function getCheckoutReturnUrl(
+  payload: PendingLandlordResponse,
+  status: 'success' | 'cancelled',
+) {
+  const params = new URLSearchParams();
+  params.set('payment', status);
+  params.set('type', payload.responseType);
+
+  if (status === 'success') {
+    params.set('session_id', '{CHECKOUT_SESSION_ID}');
+  }
+
+  if (payload.responseType === 'property') {
+    params.set('compose', 'landlord-note');
+  }
+
+  if (payload.responseType === 'review') {
+    params.set('tab', 'rental');
+  }
+
+  return `${window.location.origin}/#/property/${payload.propertyId}?${params.toString()}`;
+}
+
 function getSupabaseFunctionUrl() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
@@ -94,8 +117,8 @@ export async function startLandlordResponseCheckout(payload: PendingLandlordResp
     propertyId: payload.propertyId,
     landlordId: payload.landlordId || null,
     landlordEmail: payload.landlordEmail,
-    successUrl: `${window.location.origin}/#/property/${payload.propertyId}?payment=success&type=${payload.responseType}&session_id={CHECKOUT_SESSION_ID}`,
-    cancelUrl: `${window.location.origin}/#/property/${payload.propertyId}?payment=cancelled&type=${payload.responseType}`,
+    successUrl: getCheckoutReturnUrl(payload, 'success'),
+    cancelUrl: getCheckoutReturnUrl(payload, 'cancelled'),
   };
 
   let accessToken = await getAccessToken();

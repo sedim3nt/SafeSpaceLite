@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card, Button, Input, Textarea } from '../../common';
 import { useAuth } from '../../../contexts/AuthContext';
 import { AuthModal } from '../../auth/AuthModal';
@@ -49,6 +50,7 @@ export function LandlordResponseForm({
   propertyId,
   landlordId,
 }: LandlordResponseFormProps) {
+  const location = useLocation();
   const { user } = useAuth();
   const [body, setBody] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -57,6 +59,7 @@ export function LandlordResponseForm({
   const [confirmedAuthority, setConfirmedAuthority] = useState(false);
 
   const copy = RESPONSE_COPY[responseType];
+  const returnPath = `${location.pathname}${location.search}`;
 
   const handleCheckout = async () => {
     if (!user?.email || !body.trim() || !confirmedAuthority) return;
@@ -102,7 +105,7 @@ export function LandlordResponseForm({
           isOpen={showAuth}
           onClose={() => setShowAuth(false)}
           intent="landlord"
-          returnPath={`/property/${propertyId}`}
+          returnPath={returnPath}
         />
       </>
     );
@@ -165,7 +168,7 @@ export function LandlordResponseForm({
       isOpen={showAuth}
       onClose={() => setShowAuth(false)}
       intent="landlord"
-      returnPath={`/property/${propertyId}`}
+      returnPath={returnPath}
     />
     </>
   );

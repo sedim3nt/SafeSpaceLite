@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { Button, Card, Input, Textarea, Select } from '../components/common';
 import { ProtectedAction } from '../components/auth/ProtectedAction';
 import { AddressAutocomplete } from '../components/features/AddressAutocomplete';
@@ -140,8 +140,7 @@ export function ReportPage() {
   const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const [submittedPropertyId, setSubmittedPropertyId] = useState<string | null>(null);
+  const [redirectPath, setRedirectPath] = useState<string | null>(null);
   const [addressSearching, setAddressSearching] = useState(false);
   const [addressError, setAddressError] = useState('');
   const [validatedAddressSuggestion, setValidatedAddressSuggestion] = useState<{
@@ -294,8 +293,7 @@ export function ReportPage() {
         is_anonymous: form.isAnonymous,
       });
 
-      setSubmittedPropertyId(property.id);
-      setSuccess(true);
+      setRedirectPath(`/property/${property.id}?posted=report`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit report. Please try again.');
     } finally {
@@ -303,35 +301,8 @@ export function ReportPage() {
     }
   };
 
-  if (success) {
-    return (
-      <div className="space-y-6">
-        <Card variant="success" className="text-center">
-          <div className="space-y-4 py-4">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-sage-100">
-              <svg className="h-8 w-8 text-sage-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-sage-800">Report Submitted</h2>
-            <p className="text-sage-700">
-              Your report has been recorded and is now attached to this property page. This helps other tenants and builds a record of property conditions.
-            </p>
-            <p className="text-sm text-sage-700">
-              Next step: view the property page to confirm the post, or generate a legal notice if you need a formal paper trail.
-            </p>
-            <div className="flex justify-center gap-4 pt-2">
-              <Link to={submittedPropertyId ? `/property/${submittedPropertyId}` : '/property-lookup'}>
-                <Button variant="secondary">View Property</Button>
-              </Link>
-              <Link to={`/legal-notice?address=${encodeURIComponent(form.address)}`}>
-                <Button>Generate Legal Notice</Button>
-              </Link>
-            </div>
-          </div>
-        </Card>
-      </div>
-    );
+  if (redirectPath) {
+    return <Navigate to={redirectPath} replace />;
   }
 
   return (

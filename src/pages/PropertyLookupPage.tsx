@@ -34,6 +34,7 @@ export function PropertyLookupPage() {
   const [rentalTabLoading, setRentalTabLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'success' | 'cancelled' | 'error' | null>(null);
   const [paymentMessage, setPaymentMessage] = useState('');
+  const [postedMessage, setPostedMessage] = useState('');
   const [reviewRefreshToken, setReviewRefreshToken] = useState(0);
   const activeTab = getTabFromParams(searchParams);
 
@@ -86,6 +87,25 @@ export function PropertyLookupPage() {
     fetchPropertyData(routePropertyId)
       .finally(() => setLoading(false));
   }, [routePropertyId, fetchPropertyData]);
+
+  useEffect(() => {
+    setPostedMessage('');
+  }, [routePropertyId]);
+
+  useEffect(() => {
+    const posted = searchParams.get('posted');
+    if (!posted) return;
+
+    setPostedMessage(
+      posted === 'review'
+        ? 'Review submitted. It is now visible in the Rental Experience tab.'
+        : 'Report submitted. It is now visible on this property page.',
+    );
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('posted');
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const payment = searchParams.get('payment');
@@ -196,6 +216,11 @@ export function PropertyLookupPage() {
       {paymentStatus === 'success' && (
         <div className="rounded-lg bg-green-50 border border-green-200 p-4 mb-4">
           <p className="text-sm font-medium text-green-800">✓ {paymentMessage}</p>
+        </div>
+      )}
+      {postedMessage && (
+        <div className="rounded-lg bg-green-50 border border-green-200 p-4 mb-4">
+          <p className="text-sm font-medium text-green-800">✓ {postedMessage}</p>
         </div>
       )}
       {paymentStatus === 'cancelled' && (
