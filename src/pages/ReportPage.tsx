@@ -315,7 +315,10 @@ export function ReportPage() {
             </div>
             <h2 className="text-2xl font-bold text-sage-800">Report Submitted</h2>
             <p className="text-sage-700">
-              Your report has been recorded. This helps other tenants and builds a record of property conditions.
+              Your report has been recorded and is now attached to this property page. This helps other tenants and builds a record of property conditions.
+            </p>
+            <p className="text-sm text-sage-700">
+              Next step: view the property page to confirm the post, or generate a legal notice if you need a formal paper trail.
             </p>
             <div className="flex justify-center gap-4 pt-2">
               <Link to={submittedPropertyId ? `/property/${submittedPropertyId}` : '/property-lookup'}>
@@ -362,7 +365,11 @@ export function ReportPage() {
         <EvidenceTierGuide />
       </div>
 
-      <ProtectedAction>
+      <ProtectedAction
+        intent="report"
+        title="Create a free account to submit this report"
+        ctaLabel="Create free account to report"
+      >
         <Card>
           <form onSubmit={handleSubmit} onKeyDown={onKeyActivity} className="space-y-6">
             {/* Honeypot field — hidden from real users, catches bots */}

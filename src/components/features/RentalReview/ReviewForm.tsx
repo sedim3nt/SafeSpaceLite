@@ -1,4 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { Button, Card, Input, Textarea } from '../../common';
 import { ProtectedAction } from '../../auth/ProtectedAction';
 import { AddressAutocomplete } from '../AddressAutocomplete';
@@ -239,12 +240,22 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
         <div className="text-4xl mb-3">✓</div>
         <h3 className="text-xl font-semibold text-sage-800">Review Submitted</h3>
         <p className="mt-2 text-text-muted">
-          Thank you for helping future tenants make informed decisions.
+          Your review has been recorded and is now attached to this property page. This helps future tenants make more informed decisions.
         </p>
         {address && (
           <p className="mt-3 text-sm text-sage-600">
             Your review for <strong>{address}</strong> is now visible on the property page.
           </p>
+        )}
+        <p className="mt-3 text-sm text-sage-700">
+          Next step: view the property page to confirm the post or share the address with another renter.
+        </p>
+        {propertyId && (
+          <div className="mt-5">
+            <Link to={`/property/${propertyId}`}>
+              <Button size="sm">View Property Page</Button>
+            </Link>
+          </div>
         )}
       </Card>
     );
@@ -563,6 +574,13 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
             </div>
           </Card>
 
+          {!user && (
+            <div className="rounded-lg border border-sage-200 bg-sage-50 p-4 text-sm text-sage-800">
+              A free SafeSpace account is required to submit this review. Your review can still be posted anonymously.
+              SafeSpace uses accounts to reduce spam and confirm a real person is submitting.
+            </div>
+          )}
+
           {error && (
             <div className="rounded-lg bg-red-50 border border-red-200 p-3">
               <p className="text-sm text-red-700">{error}</p>
@@ -574,8 +592,9 @@ export function ReviewForm({ propertyId: initialPropertyId, propertyAddress }: R
               ← Back
             </Button>
             <ProtectedAction
+              intent="review"
               fallback={
-                <Button size="sm">Sign in to submit review</Button>
+                <Button size="sm">Create free account to submit review</Button>
               }
             >
               <Button size="sm" onClick={handleSubmit} disabled={submitting}>

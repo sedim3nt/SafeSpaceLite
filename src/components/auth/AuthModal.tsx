@@ -1,19 +1,33 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import {
+  getIntentAccountRequirementCopy,
+  getIntentActionLabel,
+  getIntentReturnLabel,
+  type AuthIntent,
+} from '../../lib/authFlow';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  intent?: AuthIntent;
+  returnPath?: string;
 }
 
-export function AuthModal({ isOpen, onClose }: AuthModalProps) {
+type CompletionState = {
+  title: string;
+  body: string;
+  buttonLabel: string;
+};
+
+export function AuthModal({ isOpen, onClose, intent = 'general', returnPath }: AuthModalProps) {
   const { signIn, signUp, signInWithGoogle, googleAuthEnabled } = useAuth();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [confirmationSent, setConfirmationSent] = useState(false);
+  const [completionState, setCompletionState] = useState<CompletionState | null>(null);
 
   if (!isOpen) return null;
 
@@ -24,18 +38,38 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
     try {
       if (mode === 'signup') {
-        const { error } = await signUp(email, password);
+        const { error, status } = await signUp(email, password, { returnPath, intent });
         if (error) {
           setError(error.message);
+        } else if (status === 'signed_in') {
+          setCompletionState({
+            title: 'Account created. You are signed in.',
+            body: intent === 'general'
+              ? 'Your SafeSpace account is ready.'
+              : `Your SafeSpace account is ready. Your ${getIntentActionLabel(intent)} has not been submitted yet. Return to finish it.`,
+            buttonLabel: getIntentReturnLabel(intent),
+          });
         } else {
-          setConfirmationSent(true);
+          setCompletionState({
+            title: 'Account created. Check your email.',
+            body: intent === 'general'
+              ? `We sent a SafeSpace confirmation link to ${email}. Confirm your account to finish signing in.`
+              : `We sent a SafeSpace confirmation link to ${email}. After you confirm, SafeSpace will bring you back here so you can finish your ${getIntentActionLabel(intent)}.`,
+            buttonLabel: 'Got it',
+          });
         }
       } else {
         const { error } = await signIn(email, password);
         if (error) {
           setError(error.message);
-        } else {
+        } else if (intent === 'general') {
           onClose();
+        } else {
+          setCompletionState({
+            title: 'Signed in.',
+            body: `You are signed in to SafeSpace. Your ${getIntentActionLabel(intent)} has not been submitted yet. Return to finish it.`,
+            buttonLabel: getIntentReturnLabel(intent),
+          });
         }
       }
     } finally {
@@ -45,17 +79,17 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   const handleGoogle = async () => {
     setError('');
-    const { error } = await signInWithGoogle();
-      if (error) {
-        if (error.message.includes('Unsupported provider')) {
-          setError('Google sign-in is not configured in SafeSpace yet. Use email sign-in for now.');
+    const { error } = await signInWithGoogle({ returnPath, intent });
+    if (error) {
+      if (error.message.includes('Unsupported provider')) {
+        setError('Google sign-in is not configured in SafeSpace yet. Use email sign-in for now.');
           return;
-        }
-        setError(error.message);
+      }
+      setError(error.message);
     }
   };
 
-  if (confirmationSent) {
+  if (completionState) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4" onClick={onClose}>
         <div className="w-full max-w-md rounded-lg bg-surface p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -65,12 +99,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-text">Check your email</h2>
+            <h2 className="text-xl font-bold text-text">{completionState.title}</h2>
             <p className="mt-2 text-text-muted">
-              We sent a SafeSpace confirmation link to <strong>{email}</strong>. Click the link to activate your account.
+              {completionState.body}
             </p>
             <button onClick={onClose} className="mt-6 rounded-md bg-sage-600 px-6 py-2 text-white hover:bg-sage-700 transition-colors">
-              Got it
+              {completionState.buttonLabel}
             </button>
           </div>
         </div>
@@ -86,8 +120,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             {mode === 'login' ? 'Sign in to SafeSpace' : 'Create your SafeSpace account'}
           </h2>
           <p className="mt-1 text-text-muted">
-            {mode === 'login' ? 'Access SafeSpace to report issues and track responses' : 'Join SafeSpace to protect your rental rights'}
+            {mode === 'login' ? 'Access SafeSpace to continue' : 'Join SafeSpace to continue'}
           </p>
+        </div>
+
+        <div className="mb-6 rounded-md border border-border bg-surface-muted p-4 text-sm text-text-muted">
+          {getIntentAccountRequirementCopy(intent)}
         </div>
 
         {googleAuthEnabled ? (
@@ -161,7 +199,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         <p className="mt-6 text-center text-sm text-text-muted">
           {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
           <button
-            onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); }}
+            onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); setCompletionState(null); }}
             className="font-medium text-sage-600 hover:text-sage-700"
           >
             {mode === 'login' ? 'Sign up' : 'Sign in'}

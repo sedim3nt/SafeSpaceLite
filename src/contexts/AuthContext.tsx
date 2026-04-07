@@ -1,8 +1,11 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import type { AuthIntent } from '../lib/authFlow';
 
 const OAUTH_RETURN_PATH_KEY = 'safespace.oauth.returnPath';
+const OAUTH_INTENT_KEY = 'safespace.oauth.intent';
+const AUTH_RETURN_QUERY_PARAM = 'auth_return';
 
 function getCurrentAppPath() {
   if (typeof window === 'undefined') return '/';
@@ -33,21 +36,51 @@ function consumeSavedReturnPath() {
   return savedPath;
 }
 
+function consumeSavedIntent() {
+  if (typeof window === 'undefined') return null;
+  const savedIntent = window.sessionStorage.getItem(OAUTH_INTENT_KEY);
+  if (savedIntent) {
+    window.sessionStorage.removeItem(OAUTH_INTENT_KEY);
+  }
+  return savedIntent;
+}
+
+function readReturnPathFromQuery() {
+  if (typeof window === 'undefined') return null;
+  const url = new URL(window.location.href);
+  return url.searchParams.get(AUTH_RETURN_QUERY_PARAM);
+}
+
 function replaceHashRoute(path: string) {
   if (typeof window === 'undefined') return;
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  const nextUrl = `${window.location.origin}${window.location.pathname}${window.location.search}#${normalizedPath}`;
+  const url = new URL(window.location.href);
+  url.searchParams.delete(AUTH_RETURN_QUERY_PARAM);
+  const nextUrl = `${url.origin}${url.pathname}${url.search}#${normalizedPath}`;
   window.history.replaceState({}, document.title, nextUrl);
 }
+
+function getAuthRedirectUrl(returnPath: string) {
+  if (typeof window === 'undefined') return undefined;
+  const url = new URL(window.location.href);
+  url.hash = '';
+  url.searchParams.set(AUTH_RETURN_QUERY_PARAM, returnPath);
+  return url.toString();
+}
+
+type SignUpResult = {
+  error: Error | null;
+  status?: 'signed_in' | 'confirmation_required';
+};
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   googleAuthEnabled: boolean;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, options?: { returnPath?: string; intent?: AuthIntent }) => Promise<SignUpResult>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signInWithGoogle: () => Promise<{ error: Error | null }>;
+  signInWithGoogle: (options?: { returnPath?: string; intent?: AuthIntent }) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -66,7 +99,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const oauthParams = getOAuthParamsFromHash();
       const accessToken = oauthParams?.get('access_token');
       const refreshToken = oauthParams?.get('refresh_token');
-      const savedReturnPath = consumeSavedReturnPath();
+      const savedReturnPath = consumeSavedReturnPath() || readReturnPathFromQuery();
+      consumeSavedIntent();
 
       if (accessToken && refreshToken) {
         const { data, error } = await supabase.auth.setSession({
@@ -111,9 +145,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const signUp = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({ email, password });
-    return { error: error as Error | null };
+  const signUp = useCallback(async (email: string, password: string, options?: { returnPath?: string; intent?: AuthIntent }) => {
+    const returnPath = options?.returnPath || getCurrentAppPath();
+    const redirectTo = getAuthRedirectUrl(returnPath);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: redirectTo ? { emailRedirectTo: redirectTo } : undefined,
+    });
+
+    if (error) {
+      return { error: error as Error | null };
+    }
+
+    return {
+      error: null,
+      status: data.session ? ('signed_in' as const) : ('confirmation_required' as const),
+    };
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
@@ -121,17 +169,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   }, []);
 
-  const signInWithGoogle = useCallback(async () => {
+  const signInWithGoogle = useCallback(async (options?: { returnPath?: string; intent?: AuthIntent }) => {
     if (!googleAuthEnabled) {
       return { error: new Error('Google sign-in is not available in SafeSpace yet. Use email sign-in for now.') };
     }
 
-    window.sessionStorage.setItem(OAUTH_RETURN_PATH_KEY, getCurrentAppPath());
+    window.sessionStorage.setItem(OAUTH_RETURN_PATH_KEY, options?.returnPath || getCurrentAppPath());
+    if (options?.intent) {
+      window.sessionStorage.setItem(OAUTH_INTENT_KEY, options.intent);
+    }
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}${window.location.pathname}${window.location.search}`,
+        redirectTo: getAuthRedirectUrl(options?.returnPath || getCurrentAppPath()),
       },
     });
     return { error: error as Error | null };

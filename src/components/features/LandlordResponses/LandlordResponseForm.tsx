@@ -91,13 +91,19 @@ export function LandlordResponseForm({
         <Card className="border-teal-200 bg-teal-50/50">
           <h4 className="text-base font-semibold text-text">{copy.title}</h4>
           <p className="mt-2 text-sm text-text-muted">
-            Sign in as a landlord before checkout. SafeSpace only publishes landlord responses from authenticated accounts.
+            Sign in as a landlord before checkout. SafeSpace only publishes landlord responses from authenticated accounts,
+            and the signed-in email must match the email used at checkout.
           </p>
           <Button className="mt-4" onClick={() => setShowAuth(true)}>
             Sign in to respond
           </Button>
         </Card>
-        <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+        <AuthModal
+          isOpen={showAuth}
+          onClose={() => setShowAuth(false)}
+          intent="landlord"
+          returnPath={`/property/${propertyId}`}
+        />
       </>
     );
   }
@@ -139,6 +145,11 @@ export function LandlordResponseForm({
           </span>
         </label>
 
+        <div className="rounded-lg border border-border bg-white p-4 text-sm text-text-muted">
+          SafeSpace verifies this response by requiring a signed-in account and a $10 checkout tied to the same email.
+          No manual document upload is required.
+        </div>
+
         {error && <p className="text-sm text-danger">{error}</p>}
 
         <Button
@@ -150,7 +161,12 @@ export function LandlordResponseForm({
         </Button>
       </div>
     </Card>
-    <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+    <AuthModal
+      isOpen={showAuth}
+      onClose={() => setShowAuth(false)}
+      intent="landlord"
+      returnPath={`/property/${propertyId}`}
+    />
     </>
   );
 }
