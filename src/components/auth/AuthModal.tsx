@@ -46,12 +46,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const handleGoogle = async () => {
     setError('');
     const { error } = await signInWithGoogle();
-    if (error) {
-      if (error.message.includes('Unsupported provider')) {
-        setError('Google sign-in is not configured yet. Use email sign-in for now.');
-        return;
-      }
-      setError(error.message);
+      if (error) {
+        if (error.message.includes('Unsupported provider')) {
+          setError('Google sign-in is not configured in SafeSpace yet. Use email sign-in for now.');
+          return;
+        }
+        setError(error.message);
     }
   };
 
@@ -67,7 +67,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             </div>
             <h2 className="text-xl font-bold text-text">Check your email</h2>
             <p className="mt-2 text-text-muted">
-              We sent a confirmation link to <strong>{email}</strong>. Click the link to activate your account.
+              We sent a SafeSpace confirmation link to <strong>{email}</strong>. Click the link to activate your account.
             </p>
             <button onClick={onClose} className="mt-6 rounded-md bg-sage-600 px-6 py-2 text-white hover:bg-sage-700 transition-colors">
               Got it
@@ -83,10 +83,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       <div className="w-full max-w-md rounded-lg bg-surface p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="mb-6 text-center">
           <h2 className="text-2xl font-bold text-text">
-            {mode === 'login' ? 'Welcome back' : 'Create your account'}
+            {mode === 'login' ? 'Sign in to SafeSpace' : 'Create your SafeSpace account'}
           </h2>
           <p className="mt-1 text-text-muted">
-            {mode === 'login' ? 'Sign in to report issues and track responses' : 'Join SafeSpace to protect your rental rights'}
+            {mode === 'login' ? 'Access SafeSpace to report issues and track responses' : 'Join SafeSpace to protect your rental rights'}
           </p>
         </div>
 
@@ -113,7 +113,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </>
         ) : (
           <div className="mb-6 rounded-md border border-border bg-surface-muted p-4 text-sm text-text-muted">
-            Google sign-in is not available yet. Use email to create your account or sign in.
+            Google sign-in is not available in SafeSpace yet. Use email to create your account or sign in.
           </div>
         )}
 

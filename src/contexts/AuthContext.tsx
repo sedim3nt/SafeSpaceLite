@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = useCallback(async () => {
     if (!googleAuthEnabled) {
-      return { error: new Error('Google sign-in is not available yet. Use email sign-in for now.') };
+      return { error: new Error('Google sign-in is not available in SafeSpace yet. Use email sign-in for now.') };
     }
 
     window.sessionStorage.setItem(OAUTH_RETURN_PATH_KEY, getCurrentAppPath());
