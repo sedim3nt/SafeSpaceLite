@@ -29,7 +29,12 @@ artifacts/
 typechain-types/
 
 # Environment
+.env
 .env.local
+.env.*.local
+
+# Vercel
+.vercel
 
 # Spec documents
 md/

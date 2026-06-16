@@ -1,18 +1,4 @@
-import OpenAI from 'openai';
 import { getAllResearchCities, getResearchCity, getResearchCityByName, getStateProfile, type ResearchCity } from '../data/cityDatabase';
-
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
-const MODEL = 'anthropic/claude-haiku-4-5';
-
-const client = new OpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: OPENROUTER_API_KEY,
-  dangerouslyAllowBrowser: true,
-  defaultHeaders: {
-    'HTTP-Referer': 'https://safespace.spirittree.dev',
-    'X-Title': 'SafeSpace Tenant Advocate',
-  },
-});
 
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant';
@@ -69,7 +55,7 @@ function buildJurisdictionContext(messages: AIMessage[]): string | null {
 
 export async function chatCompletion(messages: AIMessage[]): Promise<string> {
   const jurisdictionContext = buildJurisdictionContext(messages);
-  const enrichedMessages = jurisdictionContext
+  const enrichedMessages: AIMessage[] = jurisdictionContext
     ? [
         ...messages.slice(0, 1),
         { role: 'system' as const, content: jurisdictionContext },
@@ -77,13 +63,26 @@ export async function chatCompletion(messages: AIMessage[]): Promise<string> {
       ]
     : messages;
 
-  const response = await client.chat.completions.create({
-    model: MODEL,
-    messages: enrichedMessages,
-    max_tokens: 4096,
-    temperature: 0.3,
+  // Split the system message(s) out from the conversation turns. The gateway
+  // expects a single `system` string plus user/assistant `messages`.
+  const systemContent = enrichedMessages
+    .filter((message) => message.role === 'system')
+    .map((message) => message.content)
+    .join('\n\n');
+  const conversation = enrichedMessages.filter((message) => message.role !== 'system');
+
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ system: systemContent, messages: conversation }),
   });
-  return response.choices[0]?.message?.content || '';
+
+  if (!response.ok) {
+    throw new Error(`Chat request failed with status ${response.status}`);
+  }
+
+  const data: { reply?: string } = await response.json();
+  return data.reply || '';
 }
 
 // ── System Prompts ──
