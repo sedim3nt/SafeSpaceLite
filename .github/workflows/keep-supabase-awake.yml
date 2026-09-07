@@ -1,0 +1,77 @@
+name: Keep Supabase Awake
+
+on:
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  keep-awake:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SAFESPACE_PROJECT_REF: mzgmdihedzwcjljqojep
+      MARKETPLACE_PROJECT_REF: gnhmveamzymuxlsymsuw
+      SAFESPACE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      SAFESPACE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+    steps:
+      - name: Restore inactive Supabase projects
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${SUPABASE_ACCESS_TOKEN}" ]]; then
+            echo "SUPABASE_ACCESS_TOKEN secret is missing."
+            exit 1
+          fi
+
+          for ref in "${SAFESPACE_PROJECT_REF}" "${MARKETPLACE_PROJECT_REF}"; do
+            status="$(
+              curl -fsS "https://api.supabase.com/v1/projects" \
+                -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" |
+              node -e "const fs=require('fs'); const projects=JSON.parse(fs.readFileSync(0,'utf8')); const project=projects.find((p)=>p.ref==='${ref}'||p.id==='${ref}'); if (!project) process.exit(2); process.stdout.write(project.status);"
+            )"
+
+            echo "${ref} status: ${status}"
+
+            if [[ "${status}" == "INACTIVE" ]]; then
+              echo "Restoring ${ref}"
+              curl -fsS -X POST "https://api.supabase.com/v1/projects/${ref}/restore" \
+                -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+                -o /dev/null
+            fi
+          done
+
+      - name: Wait for SafeSpace database
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${SAFESPACE_SUPABASE_URL}" || -z "${SAFESPACE_SUPABASE_ANON_KEY}" ]]; then
+            echo "SafeSpace Supabase URL or anon key secret is missing."
+            exit 1
+          fi
+
+          for attempt in {1..30}; do
+            http_status="$(
+              curl -sS -o /tmp/safespace-ping.json -w "%{http_code}" \
+                "${SAFESPACE_SUPABASE_URL}/rest/v1/properties?select=id&limit=1" \
+                -H "apikey: ${SAFESPACE_SUPABASE_ANON_KEY}" \
+                -H "Authorization: Bearer ${SAFESPACE_SUPABASE_ANON_KEY}" || true
+            )"
+
+            if [[ "${http_status}" == "200" ]]; then
+              echo "SafeSpace REST ping succeeded."
+              exit 0
+            fi
+
+            echo "SafeSpace REST ping attempt ${attempt} returned ${http_status}; retrying."
+            sleep 20
+          done
+
+          echo "SafeSpace REST ping did not recover within the retry window."
+          exit 1
